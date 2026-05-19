@@ -73,7 +73,9 @@ input,button,textarea,select{font-size:16px!important}
 .a-btn{padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface2);font-size:13px;font-weight:700;cursor:pointer;color:var(--text2);font-family:var(--font)}
 .a-btn.primary{background:var(--text);color:#fff;border-color:var(--text)}
 .stat-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:14px 16px}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center;cursor:pointer;transition:all .1s;user-select:none}
+.stat-card:active{background:var(--blue-light);border-color:var(--blue)}
+.stat-card.active{background:var(--blue-light);border-color:var(--blue)}
 .stat-val{font-size:24px;font-weight:700;font-family:var(--mono);color:var(--text)}
 .stat-lbl{font-size:11px;color:var(--text3);margin-top:2px}
 .log-list{padding:0 16px 32px;display:flex;flex-direction:column;gap:8px}
@@ -103,9 +105,9 @@ input,button,textarea,select{font-size:16px!important}
 <div id="pageCatat" class="page on">
   <div class="inner">
     <div class="card">
-      <div class="card-hd">👷 Nama </div>
+      <div class="card-hd">👷 Nama Karyawan</div>
       <div class="card-bd" style="gap:8px">
-        <input id="namaKaryawan" type="text" placeholder="Nama kamu..." autocomplete="off" style="width:100%;height:40px;padding:0 14px;border:1.5px solid var(--border);border-radius:10px;font-size:16px;font-family:var(--font);color:var(--text);background:var(--surface);outline:none;-webkit-appearance:none;appearance:none" />
+        <input id="namaKaryawan" type="text" placeholder="Tulis nama kamu..." autocomplete="off" style="width:100%;height:40px;padding:0 14px;border:1.5px solid var(--border);border-radius:10px;font-size:16px;font-family:var(--font);color:var(--text);background:var(--surface);outline:none;-webkit-appearance:none;appearance:none" />
         <input id="tglInput" type="date" style="width:100%;height:40px;padding:0 14px;border:1.5px solid var(--border);border-radius:10px;font-size:16px;font-family:var(--font);color:var(--text);background:var(--surface);outline:none;-webkit-appearance:none" />
       </div>
     </div>
@@ -165,9 +167,9 @@ input,button,textarea,select{font-size:16px!important}
     <button class="a-btn" onclick="exportCSV()">⬇️ Export CSV</button>
   </div>
   <div class="stat-row">
-    <div class="stat-card"><div class="stat-val" id="statTotal">-</div><div class="stat-lbl">Qty Hari Ini</div></div>
-    <div class="stat-card"><div class="stat-val" id="statItem">-</div><div class="stat-lbl">Jenis Barang</div></div>
-    <div class="stat-card"><div class="stat-val" id="statNew">-</div><div class="stat-lbl">Barang Baru</div></div>
+    <div class="stat-card active" id="statCardTotal" onclick="setFilter('today')"><div class="stat-val" id="statTotal">-</div><div class="stat-lbl">Qty Hari Ini</div></div>
+    <div class="stat-card" id="statCardItem" onclick="setFilter('jenis')"><div class="stat-val" id="statItem">-</div><div class="stat-lbl">Jenis Barang</div></div>
+    <div class="stat-card" id="statCardNew" onclick="setFilter('baru')"><div class="stat-val" id="statNew">-</div><div class="stat-lbl">Barang Baru</div></div>
   </div>
   <div class="log-list" id="logList"><div class="empty">Klik Refresh untuk memuat data.</div></div>
 </div>
@@ -412,6 +414,15 @@ function previewCopy() {
 }
 
 // ========== ADMIN ==========
+let _filter = "today";
+
+function setFilter(f) {
+  _filter = f;
+  document.querySelectorAll(".stat-card").forEach(el => el.classList.remove("active"));
+  document.getElementById(f==="today"?"statCardTotal":f==="jenis"?"statCardItem":"statCardNew").classList.add("active");
+  renderLog(catatanData);
+}
+
 async function loadCatatan() {
   document.getElementById("logList").innerHTML = '<div class="loader"><div class="spinner"></div>Memuat...</div>';
   try {
@@ -427,28 +438,70 @@ function renderLog(data) {
   const today = new Date();
   const ts = String(today.getDate()).padStart(2,"0")+"/"+String(today.getMonth()+1).padStart(2,"0")+"/"+today.getFullYear();
   const td = data.filter(d => String(d["Tanggal"]||"").startsWith(ts));
+
+  // Always update stats
   document.getElementById("statTotal").textContent = td.reduce((s,d)=>s+(Number(d["Jumlah Input"]??d["Jumlah"])||0),0);
   document.getElementById("statItem").textContent = new Set(td.map(d=>d["PLU"]||d["Nama Barang"])).size;
   document.getElementById("statNew").textContent = data.filter(d=>d["Status Barang"]==="Barang Baru").length;
+
+  // Filter view
+  let filtered;
+  if (_filter === "baru") {
+    filtered = data.filter(d => d["Status Barang"] === "Barang Baru");
+  } else if (_filter === "jenis") {
+    // Group by PLU/Nama Barang, count total pcs
+    const map = {};
+    data.forEach(d => {
+      const key = d["Nama Barang"] || d["PLU"] || "?";
+      if (!map[key]) map[key] = { nama: key, qty: 0, lastDate: "", lastKaryawan: "" };
+      map[key].qty += Number(d["Jumlah Input"] ?? d["Jumlah"] ?? 0);
+      if (!map[key].lastDate) map[key].lastDate = d["Tanggal"]||"";
+      if (!map[key].lastKaryawan) map[key].lastKaryawan = d["Karyawan"]??d["Nama Karyawan"]??"";
+    });
+    filtered = Object.values(map).sort((a,b) => b.qty - a.qty);
+  } else {
+    filtered = data; // today / all
+  }
+
   const list = document.getElementById("logList");
-  if (!data.length) { list.innerHTML = '<div class="empty">Belum ada catatan.</div>'; return; }
+  if (!filtered.length) { list.innerHTML = '<div class="empty">Belum ada catatan.</div>'; return; }
   list.innerHTML = "";
-  data.forEach(d => {
-    const el = document.createElement("div");
-    el.className = "log-item";
-    el.innerHTML = `
-      <div class="log-top">
-        <div class="log-name">${esc(d["Nama Barang"]||"-")}</div>
-        <div class="log-qty">+${esc(String(d["Jumlah Input"]??d["Jumlah"]??0))} ${esc(d["Satuan Input"]??d["Satuan"]??"")}</div>
-      </div>
-      <div class="log-meta">
-        <span>🕐 ${esc(d["Tanggal"]||"")} ${esc(d["Jam"]||"")}</span>
-        <span>👷 ${esc(d["Karyawan"]??d["Nama Karyawan"]??"")}</span>
-        ${d["Status Barang"]==="Barang Baru"?'<span class="log-badge">BARU</span>':""}
-        ${d["Catatan"]?`<span>💬 ${esc(d["Catatan"])}</span>`:""}
-      </div>`;
-    list.appendChild(el);
-  });
+
+  if (_filter === "jenis") {
+    // Render grouped view
+    filtered.forEach(d => {
+      const el = document.createElement("div");
+      el.className = "log-item";
+      el.innerHTML = `
+        <div class="log-top">
+          <div class="log-name">${esc(d.nama)}</div>
+          <div class="log-qty">${d.qty} pcs</div>
+        </div>
+        <div class="log-meta">
+          <span>📅 ${esc(d.lastDate)}</span>
+          <span>👷 ${esc(d.lastKaryawan)}</span>
+        </div>`;
+      list.appendChild(el);
+    });
+  } else {
+    // Standard list view (today / baru)
+    filtered.forEach(d => {
+      const el = document.createElement("div");
+      el.className = "log-item";
+      el.innerHTML = `
+        <div class="log-top">
+          <div class="log-name">${esc(d["Nama Barang"]||"-")}</div>
+          <div class="log-qty">+${esc(String(d["Jumlah Input"]??d["Jumlah"]??0))} ${esc(d["Satuan Input"]??d["Satuan"]??"")}</div>
+        </div>
+        <div class="log-meta">
+          <span>🕐 ${esc(d["Tanggal"]||"")} ${esc(d["Jam"]||"")}</span>
+          <span>👷 ${esc(d["Karyawan"]??d["Nama Karyawan"]??"")}</span>
+          ${d["Status Barang"]==="Barang Baru"?'<span class="log-badge">BARU</span>':""}
+          ${d["Catatan"]?`<span>💬 ${esc(d["Catatan"])}</span>`:""}
+        </div>`;
+      list.appendChild(el);
+    });
+  }
 }
 function exportCSV() {
   if (!catatanData.length) { showToast("Load data dulu!", true); return; }
