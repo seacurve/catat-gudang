@@ -232,6 +232,37 @@ async function loadBarang() {
   } catch(e) { allBarang = []; }
 }
 
+// ========== BEEP==========
+function beepType(type) {
+  try {
+    const ctx  = new (window.AudioContext || window.webkitAudioContext)();
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    if (type === 'dos') {
+      osc.type = 'sine'; osc.frequency.value = 1400;
+      gain.gain.setValueAtTime(0.35, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.35);
+    } else if (type === 'pcs') {
+      osc.type = 'sine'; osc.frequency.value = 1100;
+      gain.gain.setValueAtTime(0.25, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.15);
+    } else {
+      // error / tidak ditemukan
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(400, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.3);
+      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.3);
+    }
+  } catch(e) {}
+}
+
+
+
 // ========== SEARCH ==========
 function onSearch(q) {
   q = q.trim();
@@ -602,13 +633,16 @@ async function scanBarcode() {
 
         if (byDus) {
           pilihBarangDenganUnit(byDus, byDus["Satuan Besar"] ?? "DOS");
+		  beepType('dos');
           showToast("📦 DOS → " + byDus["Nama Barang"]);
         } else if (bySat) {
           pilihBarangDenganUnit(bySat, bySat["Satuan Kecil"] ?? "PCS");
+		  beepType('pcs');
           showToast("🔹 PCS → " + bySat["Nama Barang"]);
         } else {
           document.getElementById('searchInput').value = code;
           onSearch(code);
+		  beepType('error');
           showToast("❓ Tidak ditemukan: " + code, true);
         }
       },
