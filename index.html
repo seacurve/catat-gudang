@@ -24,7 +24,7 @@ input,button,textarea,select{font-size:16px!important}
 .topbar-title{font-family:var(--mono);font-size:13px;letter-spacing:0.5px}
 .tabs{display:flex;gap:4px}
 .tab{font-size:12px;padding:6px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.25);background:transparent;color:rgba(255,255,255,0.6);cursor:pointer;font-family:var(--font);font-weight:600;min-height:36px}
-.tab.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tab.on{background:#D4500A;color:#fff;border-color:var(--accent)}
 .page{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .page.on{display:block}
 .inner{padding:4px 0;display:flex;flex-direction:column;gap:4px;width:100%}
@@ -294,6 +294,20 @@ function pilihBarang(b) {
   document.getElementById("searchInput").focus();
 }
 
+function pilihBarangDenganUnit(b, forcedUnit) {
+  const isiDos = parseInt(b["Isi per Dos"] ?? 0) || 0;
+  const sK = b["Satuan Kecil"] ?? "PCS";
+  const sB = b["Satuan Besar"] ?? "DOS";
+  addItem({
+    plu: b["PLU"] ?? "", nama: b["Nama Barang"] ?? "", merk: b["Merk"] ?? "",
+    qty: 1, unit: forcedUnit,
+    isiPerDos: isiDos, satuanKecil: sK, satuanBesar: sB,
+    isiKemasan: b["Isi Kemasan"] ?? "", hasDus: isiDos > 0
+  });
+  document.getElementById("searchResults").innerHTML = "";
+  document.getElementById("searchInput").value = "";
+}
+
 let _newBarangQuery = "";
 function tambahBarangBaru(query) {
   _newBarangQuery = query || "";
@@ -557,7 +571,7 @@ async function scanBarcode() {
       📷 Arahkan kamera ke barcode
     </div>
     <button id="btnScanCancel" style="width:100%;max-width:400px;padding:14px;
-      border-radius:10px;background:var(--accent);color:#fff;border:none;
+      border-radius:10px;background:#D4500A;color:#fff;border:none;
       font-size:16px;font-weight:800;cursor:pointer;font-family:var(--font)">
       ✕ Batal
     </button>`;
@@ -577,11 +591,26 @@ async function scanBarcode() {
       { fps: 15, qrbox: { width: 280, height: 120 }, aspectRatio: 1.5 },
       async (decodedText) => {
         await cleanup();
-        // Isi search field dengan hasil scan
-        const inp = document.getElementById('searchInput');
-        inp.value = decodedText.trim();
-        onSearch(decodedText.trim());
-        showToast("📷 Scan: " + decodedText.trim());
+        const code = decodedText.trim();
+
+        const byDus = allBarang.find(b =>
+          (b["Barcode Dos"] || "").toString().trim() === code
+        );
+        const bySat = allBarang.find(b =>
+          (b["Barcode"] || "").toString().trim() === code
+        );
+
+        if (byDus) {
+          pilihBarangDenganUnit(byDus, byDus["Satuan Besar"] ?? "DOS");
+          showToast("📦 DOS → " + byDus["Nama Barang"]);
+        } else if (bySat) {
+          pilihBarangDenganUnit(bySat, bySat["Satuan Kecil"] ?? "PCS");
+          showToast("🔹 PCS → " + bySat["Nama Barang"]);
+        } else {
+          document.getElementById('searchInput').value = code;
+          onSearch(code);
+          showToast("❓ Tidak ditemukan: " + code, true);
+        }
       },
       () => {}
     );
