@@ -115,10 +115,18 @@ input,button,textarea,select{font-size:16px!important}
     <div class="card">
       <div class="card-hd">🔍 Cari Barang</div>
       <div class="card-bd">
-        <div class="search-wrap">
-          <span class="search-ico">🔎</span>
-          <input class="search-input" id="searchInput" type="text" placeholder="Ketik nama, PLU, atau barcode..." oninput="onSearch(this.value)" autocomplete="off" />
-        </div>
+        <div class="search-wrap" style="display:flex;gap:8px;align-items:center">
+  <div style="position:relative;flex:1">
+    <span class="search-ico">🔎</span>
+    <input class="search-input" id="searchInput" type="text"
+      placeholder="Ketik nama, PLU, atau barcode..."
+      oninput="onSearch(this.value)" autocomplete="off" />
+  </div>
+  <button onclick="scanBarcode()" type="button"
+    style="width:44px;height:40px;border-radius:10px;border:1.5px solid var(--border);
+      background:var(--surface2);font-size:20px;flex-shrink:0;cursor:pointer;
+      display:flex;align-items:center;justify-content:center">📷</button>
+</div>
         <div id="searchResults"></div>
       </div>
     </div>
@@ -527,6 +535,66 @@ function showToast(msg, isErr) {
   clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove("show"), 3000);
 }
 function esc(s) { return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+async function scanBarcode() {
+  if (!window.Html5Qrcode) {
+    showToast("Memuat scanner...");
+    await new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  }
+
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `position:fixed;inset:0;background:#000;z-index:9999;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:16px;gap:12px`;
+  overlay.innerHTML = `
+    <div id="qr-reader" style="width:100%;max-width:400px;border-radius:12px;overflow:hidden"></div>
+    <div style="color:#aaa;font-size:14px;text-align:center">
+      📷 Arahkan kamera ke barcode
+    </div>
+    <button id="btnScanCancel" style="width:100%;max-width:400px;padding:14px;
+      border-radius:10px;background:var(--accent);color:#fff;border:none;
+      font-size:16px;font-weight:800;cursor:pointer;font-family:var(--font)">
+      ✕ Batal
+    </button>`;
+  document.body.appendChild(overlay);
+
+  let scanner;
+  const cleanup = async () => {
+    try { if (scanner) await scanner.stop(); } catch(e) {}
+    if (overlay.parentNode) overlay.remove();
+  };
+  document.getElementById('btnScanCancel').onclick = cleanup;
+
+  try {
+    scanner = new Html5Qrcode('qr-reader');
+    await scanner.start(
+      { facingMode: 'environment' },
+      { fps: 15, qrbox: { width: 280, height: 120 }, aspectRatio: 1.5 },
+      async (decodedText) => {
+        await cleanup();
+        // Isi search field dengan hasil scan
+        const inp = document.getElementById('searchInput');
+        inp.value = decodedText.trim();
+        onSearch(decodedText.trim());
+        showToast("📷 Scan: " + decodedText.trim());
+      },
+      () => {}
+    );
+  } catch(e) {
+    await cleanup();
+    // Fallback: input manual jika kamera tidak bisa dibuka
+    const code = prompt('📷 Kamera tidak tersedia. Masukkan barcode manual:');
+    if (code) {
+      document.getElementById('searchInput').value = code.trim();
+      onSearch(code.trim());
+    }
+  }
+}
 </script>
 </body>
 </html>
