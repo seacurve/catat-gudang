@@ -59,7 +59,7 @@ input,button,textarea,select{font-size:16px!important;font-family:var(--font)}
 .add-scan-btn{height:32px;padding:0 14px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0}
 
 /* PAGE */
-.page{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:80px}
+.page{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:90px}
 .page.on{display:block}
 .inner{padding:4px 0;display:flex;flex-direction:column;gap:4px;width:100%}
 .card{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);overflow:hidden}
@@ -100,9 +100,11 @@ input,button,textarea,select{font-size:16px!important;font-family:var(--font)}
 .ir-stepper span{min-width:28px;text-align:center;font-family:var(--mono);font-size:13px;font-weight:700}
 .ir-total{font-size:10px;color:var(--text3);font-family:var(--mono);flex-shrink:0;width:44px;text-align:right;line-height:1.2}
 .ir-del{color:var(--red);cursor:pointer;font-size:16px;padding:0 2px;flex-shrink:0;opacity:.6;line-height:1}
+@keyframes mergeFlash{0%{background:var(--green-light)}60%{background:var(--green-light)}100%{background:var(--surface)}}
+.item-row.merged{animation:mergeFlash 1s ease forwards}
 
 /* BOTTOM SAVE BAR */
-.save-bar{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:8px 12px;display:none;gap:8px;z-index:150}
+.save-bar{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:8px 12px 12px;display:none;gap:8px;z-index:150}
 .save-bar.show{display:flex}
 .simpan-btn{flex:1;height:44px;border:none;border-radius:9px;background:var(--green);color:#fff;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s}
 .simpan-btn:active{transform:scale(.98);background:#155027}
@@ -120,13 +122,16 @@ input,button,textarea,select{font-size:16px!important;font-family:var(--font)}
 .qp-danger{background:var(--accent);color:#fff}
 
 /* CONFIRM MODAL */
-.confirm-list{background:var(--surface2);border-radius:8px;padding:10px 12px;font-size:12px;font-family:var(--mono);max-height:160px;overflow-y:auto;line-height:1.7;color:var(--text2)}
+.confirm-list{background:var(--surface2);border-radius:8px;padding:10px 12px;font-size:12px;font-family:var(--mono);max-height:160px;overflow-y:auto;line-height:1.7;color:var(--text2);white-space:pre-line;display:block}
 
 /* TOAST */
-.toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:#fff;padding:10px 18px;border-radius:9px;font-size:13px;font-weight:600;z-index:999;transition:transform .25s;white-space:nowrap;pointer-events:none}
+.toast{position:fixed;bottom:72px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:#fff;padding:10px 18px;border-radius:9px;font-size:13px;font-weight:600;z-index:999;transition:transform .25s;white-space:nowrap;pointer-events:none}
 .toast.show{transform:translateX(-50%) translateY(0)}
 .toast.err{background:var(--accent-dark)}
 .toast.ok{background:var(--green)}
+.undo-toast{position:fixed;bottom:72px;left:12px;right:12px;background:var(--text);color:#fff;padding:10px 14px;border-radius:9px;font-size:13px;font-weight:600;z-index:998;display:flex;align-items:center;justify-content:space-between;transform:translateY(120px);transition:transform .25s;pointer-events:none}
+.undo-toast.show{transform:translateY(0);pointer-events:auto}
+.undo-btn{background:var(--accent);color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer}
 
 /* ADMIN */
 .admin-toolbar{display:flex;gap:8px;padding:10px 12px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:44px;z-index:50;flex-wrap:wrap}
@@ -184,7 +189,7 @@ input,button,textarea,select{font-size:16px!important;font-family:var(--font)}
     <button class="unit-btn" id="scanUnitPcs" onclick="setScanUnit('pcs')">PCS</button>
     <div class="qty-stepper">
       <button onclick="chgScanQty(-1)">−</button>
-      <span id="scanQty">1</span>
+      <span id="scanQty" onclick="editScanQty()" title="Tap untuk edit">1</span>
       <button onclick="chgScanQty(1)">+</button>
     </div>
     <button class="add-scan-btn" onclick="addScanItem()">✅ Tambah</button>
@@ -276,7 +281,10 @@ input,button,textarea,select{font-size:16px!important;font-family:var(--font)}
     </div>
   </div>
 </div>
-
+<div class="undo-toast" id="undoToast">
+  <span id="undoMsg"></span>
+  <button class="undo-btn" onclick="undoRemove()">↩️ Undo</button>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -497,6 +505,23 @@ function chgScanQty(d) {
   _scanQty = Math.max(1, _scanQty + d);
   document.getElementById("scanQty").textContent = _scanQty;
 }
+function editScanQty() {
+  const el = document.getElementById("scanQty");
+  const inp = document.createElement("input");
+  inp.type = "number"; inp.min = "1"; inp.value = _scanQty;
+  inp.style.cssText = "width:44px;height:28px;border:none;text-align:center;font-family:var(--mono);font-size:13px;font-weight:700;background:var(--blue-light);border-radius:4px;outline:none;color:var(--text)";
+  el.replaceWith(inp);
+  inp.select(); inp.focus();
+  const commit = () => {
+    _scanQty = Math.max(1, parseInt(inp.value) || 1);
+    const span = document.createElement("span");
+    span.id = "scanQty"; span.textContent = _scanQty;
+    span.onclick = editScanQty; span.title = "Tap untuk edit";
+    inp.replaceWith(span);
+  };
+  inp.addEventListener("blur", commit);
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") { inp.blur(); } });
+}
 
 function addScanItem() {
   if (!_scanBarang) return;
@@ -584,10 +609,19 @@ function addOrMergeItem(item) {
     renderItemList();
     localStorage.setItem(LS_ITEMS, JSON.stringify(itemList));
     showToast("+" + item.qty + " " + item.unit + " → " + item.nama, false, true);
+    setTimeout(() => {
+      const rows = document.querySelectorAll(".item-row");
+      if (rows[existing]) { rows[existing].classList.add("merged"); setTimeout(() => rows[existing]?.classList.remove("merged"), 1000); }
+    }, 30);
   } else {
     itemList.push(item);
     renderItemList();
     localStorage.setItem(LS_ITEMS, JSON.stringify(itemList));
+    setTimeout(() => {
+      const rows = document.querySelectorAll(".item-row");
+      const last = rows[rows.length - 1];
+      if (last) last.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 30);
   }
 }
 
@@ -610,7 +644,26 @@ function okNewBarang() {
 }
 function tutupNewBarang() { document.getElementById("newBarangModal").classList.remove("show"); }
 
-function removeItem(idx) { itemList.splice(idx, 1); renderItemList(); localStorage.setItem(LS_ITEMS, JSON.stringify(itemList)); }
+let _lastRemoved = null, _undoT = null;
+function removeItem(idx) {
+  _lastRemoved = { item: {...itemList[idx]}, idx };
+  itemList.splice(idx, 1); renderItemList(); localStorage.setItem(LS_ITEMS, JSON.stringify(itemList));
+  showUndoToast("🗑️ " + _lastRemoved.item.nama + " dihapus");
+}
+function undoRemove() {
+  if (!_lastRemoved) return;
+  itemList.splice(_lastRemoved.idx, 0, _lastRemoved.item);
+  _lastRemoved = null; renderItemList(); localStorage.setItem(LS_ITEMS, JSON.stringify(itemList));
+  hideUndoToast(); showToast("↩️ Dikembalikan", false, true);
+}
+function showUndoToast(msg) {
+  clearTimeout(_undoT);
+  const t = document.getElementById("undoToast");
+  document.getElementById("undoMsg").textContent = msg;
+  t.classList.add("show");
+  _undoT = setTimeout(hideUndoToast, 4000);
+}
+function hideUndoToast() { document.getElementById("undoToast").classList.remove("show"); }
 function hapusSemua() {
   if (!itemList.length) return;
   if (!confirm("Hapus semua " + itemList.length + " item?")) return;
