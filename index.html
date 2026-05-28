@@ -14,141 +14,235 @@
   --blue:#1A5FAB; --blue-light:#DDE9F8;
   --yellow:#8A6000; --yellow-light:#FBF0CC;
   --red:#C62828; --red-light:#FFEBEE;
-  --radius:12px; --font:'Noto Sans',sans-serif; --mono:'Space Mono',monospace;
+  --radius:10px; --font:'Noto Sans',sans-serif; --mono:'Space Mono',monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
 html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--text);touch-action:manipulation}
 body{display:flex;flex-direction:column;min-height:100vh;-webkit-font-smoothing:antialiased}
-input,button,textarea,select{font-size:16px!important}
-.topbar{background:var(--text);color:#fff;padding:0 12px;height:48px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
-.topbar-title{font-family:var(--mono);font-size:13px;letter-spacing:0.5px}
+input,button,textarea,select{font-size:16px!important;font-family:var(--font)}
+
+/* TOPBAR */
+.topbar{background:var(--text);color:#fff;padding:0 12px;height:44px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200}
+.topbar-left{display:flex;align-items:center;gap:8px}
+.topbar-title{font-family:var(--mono);font-size:12px;letter-spacing:0.5px}
+.counter-badge{background:var(--accent);color:#fff;font-family:var(--mono);font-size:11px;font-weight:700;padding:2px 7px;border-radius:99px;min-width:22px;text-align:center;display:none}
+.counter-badge.show{display:inline-block}
 .tabs{display:flex;gap:4px}
-.tab{font-size:12px;padding:6px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.25);background:transparent;color:rgba(255,255,255,0.6);cursor:pointer;font-family:var(--font);font-weight:600;min-height:36px}
-.tab.on{background:#D4500A;color:#fff;border-color:var(--accent)}
-.page{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.tab{font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.25);background:transparent;color:rgba(255,255,255,0.6);cursor:pointer;font-family:var(--font);font-weight:600;min-height:32px}
+.tab.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* SUBBAR — nama + tanggal + kamera toggle */
+.subbar{background:var(--surface);border-bottom:2px solid var(--border);padding:6px 12px;display:flex;align-items:center;gap:8px;position:sticky;top:44px;z-index:190}
+.subbar-nama{flex:1;min-width:0;display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.subbar-nama::-webkit-scrollbar{display:none}
+.nama-btn{flex-shrink:0;height:32px;padding:0 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);font-size:13px;font-weight:700;cursor:pointer;color:var(--text2);white-space:nowrap;transition:all .1s}
+.nama-btn.active{background:var(--text);color:#fff;border-color:var(--text)}
+.tgl-input{height:32px;padding:0 8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--text);background:var(--surface);outline:none;-webkit-appearance:none;width:130px;flex-shrink:0}
+.cam-toggle{width:36px;height:32px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);font-size:18px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.cam-toggle.on{background:var(--accent);border-color:var(--accent)}
+
+/* CAMERA ZONE — inline sticky */
+.cam-zone{background:#000;overflow:hidden;transition:max-height .3s ease;max-height:0;position:sticky;top:82px;z-index:180}
+.cam-zone.open{max-height:280px}
+#qr-reader{width:100%}
+.scan-result-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 12px;display:none;flex-direction:column;gap:6px;position:sticky;top:82px;z-index:175}
+.scan-result-bar.show{display:flex}
+.scan-item-name{font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scan-controls{display:flex;align-items:center;gap:8px}
+.unit-btn{height:32px;padding:0 12px;border-radius:7px;border:1.5px solid var(--border);background:var(--surface2);font-size:12px;font-weight:700;cursor:pointer;color:var(--text2);font-family:var(--mono);transition:all .1s}
+.unit-btn.active{background:var(--green-light);border-color:var(--green);color:var(--green)}
+.qty-stepper{display:flex;align-items:center;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;margin-left:auto}
+.qty-stepper button{width:36px;height:32px;border:none;background:var(--surface2);font-size:16px;cursor:pointer;color:var(--text);font-weight:700}
+.qty-stepper span{min-width:36px;text-align:center;font-family:var(--mono);font-size:14px;font-weight:700;padding:0 4px}
+.add-scan-btn{height:32px;padding:0 14px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0}
+
+/* PAGE */
+.page{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:80px}
 .page.on{display:block}
 .inner{padding:4px 0;display:flex;flex-direction:column;gap:4px;width:100%}
 .card{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);overflow:hidden}
 .card+.card{border-top:none}
-.card-hd{background:var(--surface2);border-bottom:1px solid var(--border);padding:10px 14px;font-size:14px;font-weight:700;letter-spacing:.5px;color:var(--text2);font-family:var(--font)}
-.card-bd{padding:10px 14px;display:flex;flex-direction:column;gap:8px}
+.card-hd{background:var(--surface2);border-bottom:1px solid var(--border);padding:8px 12px;font-size:13px;font-weight:700;letter-spacing:.3px;color:var(--text2)}
+.card-bd{padding:8px 12px;display:flex;flex-direction:column;gap:6px}
+
+/* SEARCH */
 .search-wrap{position:relative}
-.search-input{width:100%;height:40px;border:1.5px solid var(--border);border-radius:10px;padding:0 14px 0 42px;font-size:16px;font-family:var(--font);background:var(--surface);color:var(--text);outline:none;transition:border-color .15s;-webkit-appearance:none;appearance:none}
+.search-input{width:100%;height:38px;border:1.5px solid var(--border);border-radius:9px;padding:0 12px 0 38px;font-size:16px;background:var(--surface);color:var(--text);outline:none;transition:border-color .15s;-webkit-appearance:none}
 .search-input:focus{border-color:var(--accent)}
-.search-ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--text3);pointer-events:none}
-.results{display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.ritem{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--surface);cursor:pointer;transition:all .1s;min-height:50px}
+.search-ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--text3);pointer-events:none}
+.results{display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.ritem{display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid var(--border);border-radius:9px;background:var(--surface);cursor:pointer;transition:all .1s;min-height:44px}
 .ritem:active{background:var(--blue-light);border-color:var(--blue)}
-.rico{width:40px;height:40px;border-radius:8px;background:var(--blue-light);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.rico{width:34px;height:34px;border-radius:7px;background:var(--blue-light);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
 .rico.new{background:var(--yellow-light)}
 .rinfo{flex:1;min-width:0}
-.rname{font-size:15px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rmeta{font-size:12px;color:var(--text3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rbadge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:5px;flex-shrink:0;font-family:var(--mono)}
+.rname{font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rmeta{font-size:11px;color:var(--text3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rbadge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0;font-family:var(--mono)}
 .b-blue{background:var(--blue-light);color:var(--blue)}
 .b-yellow{background:var(--yellow-light);color:var(--yellow)}
-.addon-btn{width:100%;padding:12px;border:2px dashed var(--accent);border-radius:10px;background:var(--accent-light);font-size:14px;font-weight:700;color:var(--accent-dark);cursor:pointer;text-align:center;transition:all .1s;font-family:var(--font)}
-.item-list{display:flex;flex-direction:column;gap:8px}
-.item-entry{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px}
-.item-entry .ie-name{font-size:15px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.item-entry .ie-qty{font-size:13px;color:var(--text2);font-family:var(--mono);margin-top:1px}
-.ie-unit{font-size:11px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-weight:700;background:var(--surface2);color:var(--text2);font-family:var(--mono);transition:all .1s}
-.ie-unit.active{background:var(--green-light);border-color:var(--green);color:var(--green)}
-.ie-del{font-size:18px;color:var(--red);cursor:pointer;padding:0 4px;line-height:1;opacity:.7}
-.qty-popup{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:none;align-items:center;justify-content:center}
+
+/* ITEM LIST — COMPACT */
+.item-list{display:flex;flex-direction:column;gap:2px}
+.item-row{display:flex;align-items:center;gap:6px;padding:7px 10px;background:var(--surface);border-bottom:1px solid var(--border);min-height:44px}
+.item-row:first-child{border-top:1px solid var(--border)}
+.ir-num{font-family:var(--mono);font-size:11px;color:var(--text3);width:18px;flex-shrink:0;text-align:right}
+.ir-name{flex:1;min-width:0}
+.ir-name-txt{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+.ir-meta{font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+.ir-unit{font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px;cursor:pointer;border:1.5px solid var(--border);background:var(--surface2);color:var(--text2);font-family:var(--mono);flex-shrink:0;transition:all .1s}
+.ir-unit.dos{background:var(--accent-light);border-color:var(--accent);color:var(--accent-dark)}
+.ir-unit.pcs{background:var(--green-light);border-color:var(--green);color:var(--green)}
+.ir-stepper{display:flex;align-items:center;gap:0;border:1px solid var(--border);border-radius:7px;overflow:hidden;flex-shrink:0}
+.ir-stepper button{width:28px;height:28px;border:none;background:var(--surface2);font-size:14px;cursor:pointer;color:var(--text);font-weight:700;line-height:1}
+.ir-stepper span{min-width:28px;text-align:center;font-family:var(--mono);font-size:13px;font-weight:700}
+.ir-total{font-size:10px;color:var(--text3);font-family:var(--mono);flex-shrink:0;width:44px;text-align:right;line-height:1.2}
+.ir-del{color:var(--red);cursor:pointer;font-size:16px;padding:0 2px;flex-shrink:0;opacity:.6;line-height:1}
+
+/* BOTTOM SAVE BAR */
+.save-bar{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:8px 12px;display:none;gap:8px;z-index:150}
+.save-bar.show{display:flex}
+.simpan-btn{flex:1;height:44px;border:none;border-radius:9px;background:var(--green);color:#fff;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s}
+.simpan-btn:active{transform:scale(.98);background:#155027}
+.hapus-btn{width:48px;height:44px;border:none;border-radius:9px;background:var(--red-light);color:var(--red);font-size:18px;cursor:pointer;flex-shrink:0}
+
+/* MODALS */
+.qty-popup{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:none;align-items:flex-end;justify-content:center}
 .qty-popup.show{display:flex}
-.qp-card{background:var(--surface);border-radius:var(--radius);padding:24px;width:300px;display:flex;flex-direction:column;gap:14px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
-.qp-title{font-size:14px;font-weight:700;color:var(--text)}
+.qp-card{background:var(--surface);border-radius:16px 16px 0 0;padding:20px 16px;width:100%;max-width:480px;display:flex;flex-direction:column;gap:12px;box-shadow:0 -8px 32px rgba(0,0,0,.2)}
+.qp-title{font-size:15px;font-weight:700;color:var(--text)}
 .qp-foot{display:flex;gap:8px}
-.qp-foot button{flex:1;padding:12px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);min-height:40px}
+.qp-foot button{flex:1;padding:12px;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;min-height:44px}
 .qp-ok{background:var(--green);color:#fff}
 .qp-cancel{background:var(--surface2);color:var(--text2);border:1px solid var(--border)!important}
-.simpan-btn{width:100%;height:48px;border:none;border-radius:10px;background:var(--green);color:#fff;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:var(--font);transition:all .15s}
-.simpan-btn:active{transform:scale(.98);background:#155027}
-.simpan-btn:disabled{background:var(--border-strong);cursor:not-allowed}
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;z-index:999;transition:transform .3s;white-space:nowrap;pointer-events:none}
+.qp-danger{background:var(--accent);color:#fff}
+
+/* CONFIRM MODAL */
+.confirm-list{background:var(--surface2);border-radius:8px;padding:10px 12px;font-size:12px;font-family:var(--mono);max-height:160px;overflow-y:auto;line-height:1.7;color:var(--text2)}
+
+/* TOAST */
+.toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:#fff;padding:10px 18px;border-radius:9px;font-size:13px;font-weight:600;z-index:999;transition:transform .25s;white-space:nowrap;pointer-events:none}
 .toast.show{transform:translateX(-50%) translateY(0)}
 .toast.err{background:var(--accent-dark)}
-.admin-toolbar{display:flex;gap:8px;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:54px;z-index:50;flex-wrap:wrap}
-.a-btn{padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface2);font-size:13px;font-weight:700;cursor:pointer;color:var(--text2);font-family:var(--font)}
+.toast.ok{background:var(--green)}
+
+/* ADMIN */
+.admin-toolbar{display:flex;gap:8px;padding:10px 12px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:44px;z-index:50;flex-wrap:wrap}
+.a-btn{padding:7px 12px;border:1.5px solid var(--border);border-radius:7px;background:var(--surface2);font-size:13px;font-weight:700;cursor:pointer;color:var(--text2)}
 .a-btn.primary{background:var(--text);color:#fff;border-color:var(--text)}
-.stat-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:14px 16px}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center;cursor:pointer;transition:all .1s;user-select:none}
+.stat-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:12px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px;text-align:center;cursor:pointer;transition:all .1s;user-select:none}
 .stat-card:active{background:var(--blue-light);border-color:var(--blue)}
 .stat-card.active{background:var(--blue-light);border-color:var(--blue)}
-.stat-val{font-size:24px;font-weight:700;font-family:var(--mono);color:var(--text)}
-.stat-lbl{font-size:11px;color:var(--text3);margin-top:2px}
-.log-list{padding:0 16px 32px;display:flex;flex-direction:column;gap:8px}
-.log-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px}
-.log-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
-.log-name{font-size:15px;font-weight:700;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.log-qty{font-size:15px;font-weight:700;font-family:var(--mono);color:var(--green);flex-shrink:0}
-.log-meta{font-size:13px;color:var(--text3);display:flex;gap:12px;flex-wrap:wrap}
-.log-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;font-family:var(--mono);background:var(--yellow-light);color:var(--yellow)}
-.empty{text-align:center;padding:48px 16px;color:var(--text3);font-size:15px}
-.loader{text-align:center;padding:24px;color:var(--text3);font-size:14px}
-.spinner{width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 8px}
+.stat-val{font-size:22px;font-weight:700;font-family:var(--mono);color:var(--text)}
+.stat-lbl{font-size:10px;color:var(--text3);margin-top:2px}
+.log-list{padding:0 12px 32px;display:flex;flex-direction:column;gap:6px}
+.log-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px}
+.log-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+.log-name{font-size:14px;font-weight:700;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.log-qty{font-size:14px;font-weight:700;font-family:var(--mono);color:var(--green);flex-shrink:0}
+.log-meta{font-size:12px;color:var(--text3);display:flex;gap:10px;flex-wrap:wrap}
+.log-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;font-family:var(--mono);background:var(--yellow-light);color:var(--yellow)}
+.empty{text-align:center;padding:40px 16px;color:var(--text3);font-size:14px}
+.loader{text-align:center;padding:24px;color:var(--text3);font-size:13px}
+.spinner{width:22px;height:22px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 8px}
 @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 
+<!-- TOPBAR -->
 <div class="topbar">
-  <span class="topbar-title">📦 CATAT GUDANG</span>
+  <div class="topbar-left">
+    <span class="topbar-title">📦 CATAT GUDANG</span>
+    <span class="counter-badge" id="topCounter">0</span>
+  </div>
   <div class="tabs">
     <button class="tab on" onclick="showPage('catat')">Catat</button>
     <button class="tab" onclick="showPage('admin')">Admin</button>
   </div>
 </div>
 
+<!-- SUBBAR: nama + tanggal + kamera -->
+<div class="subbar" id="subbar" style="display:none">
+  <div class="subbar-nama" id="namaBtns"></div>
+  <input id="tglInput" type="date" class="tgl-input" />
+  <button class="cam-toggle" id="camToggle" onclick="toggleCamera()" title="Kamera">📷</button>
+</div>
+
+<!-- CAMERA ZONE inline -->
+<div class="cam-zone" id="camZone">
+  <div id="qr-reader"></div>
+</div>
+<!-- SCAN RESULT BAR -->
+<div class="scan-result-bar" id="scanResultBar">
+  <div class="scan-item-name" id="scanItemName">—</div>
+  <div class="scan-controls">
+    <button class="unit-btn" id="scanUnitDos" onclick="setScanUnit('dos')">DOS</button>
+    <button class="unit-btn" id="scanUnitPcs" onclick="setScanUnit('pcs')">PCS</button>
+    <div class="qty-stepper">
+      <button onclick="chgScanQty(-1)">−</button>
+      <span id="scanQty">1</span>
+      <button onclick="chgScanQty(1)">+</button>
+    </div>
+    <button class="add-scan-btn" onclick="addScanItem()">✅ Tambah</button>
+  </div>
+</div>
+
 <!-- PAGE CATAT -->
 <div id="pageCatat" class="page on">
   <div class="inner">
-    <div class="card">
-      <div class="card-hd">👷 Nama </div>
-      <div class="card-bd" style="gap:8px">
-        <input id="namaKaryawan" type="text" placeholder="Tulis nama..." autocomplete="off" style="width:100%;height:40px;padding:0 14px;border:1.5px solid var(--border);border-radius:10px;font-size:16px;font-family:var(--font);color:var(--text);background:var(--surface);outline:none;-webkit-appearance:none;appearance:none" />
-        <input id="tglInput" type="date" style="width:100%;height:40px;padding:0 14px;border:1.5px solid var(--border);border-radius:10px;font-size:16px;font-family:var(--font);color:var(--text);background:var(--surface);outline:none;-webkit-appearance:none" />
-      </div>
-    </div>
 
     <div class="card">
       <div class="card-hd">🔍 Cari Barang</div>
       <div class="card-bd">
-        <div class="search-wrap" style="display:flex;gap:8px;align-items:center">
-  <div style="position:relative;flex:1">
-    <span class="search-ico">🔎</span>
-    <input class="search-input" id="searchInput" type="text"
-      placeholder="Ketik nama, PLU, atau barcode..."
-      oninput="onSearch(this.value)" autocomplete="off" />
-  </div>
-  <button onclick="scanBarcode()" type="button"
-    style="width:44px;height:40px;border-radius:10px;border:1.5px solid var(--border);
-      background:var(--surface2);font-size:20px;flex-shrink:0;cursor:pointer;
-      display:flex;align-items:center;justify-content:center">📷</button>
-</div>
+        <div class="search-wrap">
+          <span class="search-ico">🔎</span>
+          <input class="search-input" id="searchInput" type="text"
+            placeholder="Ketik nama, PLU, atau barcode..."
+            oninput="onSearch(this.value)" autocomplete="off" />
+        </div>
         <div id="searchResults"></div>
       </div>
     </div>
 
     <div class="card" id="cardItems" style="display:none">
-      <div class="card-hd">📋 Barang Dicatat <span id="itemCount" style="margin-left:6px;font-size:11px;color:var(--text3)"></span></div>
-      <div class="card-bd"><div class="item-list" id="itemList"></div></div>
+      <div class="card-hd" style="display:flex;align-items:center;justify-content:space-between">
+        <span>📋 Barang Dicatat</span>
+        <span id="itemCount" style="font-size:11px;color:var(--text3);font-weight:400"></span>
+      </div>
+      <div class="item-list" id="itemList"></div>
     </div>
 
-    <div style="display:flex;gap:8px;padding:0 14px">
-      <button class="simpan-btn" id="simpanSemuaBtn" onclick="simpanSemua()" style="display:none;flex:1">✅ Simpan Semua <span id="simpanCount"></span></button>
-      <button class="simpan-btn" id="hapusSemuaBtn" onclick="hapusSemua()" style="display:none;width:64px;background:var(--red);flex-shrink:0">🗑️</button>
-    </div>
   </div>
+</div>
+
+<!-- PAGE ADMIN -->
+<div id="pageAdmin" class="page">
+  <div class="admin-toolbar">
+    <button class="a-btn primary" onclick="loadCatatan()">🔄 Refresh</button>
+    <button class="a-btn" onclick="exportCSV()">⬇️ CSV</button>
+  </div>
+  <div class="stat-row">
+    <div class="stat-card active" id="statCardTotal" onclick="setFilter('today')"><div class="stat-val" id="statTotal">-</div><div class="stat-lbl">Qty Hari Ini</div></div>
+    <div class="stat-card" id="statCardItem" onclick="setFilter('jenis')"><div class="stat-val" id="statItem">-</div><div class="stat-lbl">Jenis Barang</div></div>
+    <div class="stat-card" id="statCardNew" onclick="setFilter('baru')"><div class="stat-val" id="statNew">-</div><div class="stat-lbl">Barang Baru</div></div>
+  </div>
+  <div class="log-list" id="logList"><div class="empty">Klik Refresh untuk memuat data.</div></div>
+</div>
+
+<!-- SAVE BAR (bottom fixed) -->
+<div class="save-bar" id="saveBar">
+  <button class="simpan-btn" id="simpanSemuaBtn" onclick="konfirmasiSimpan()">✅ Simpan Semua <span id="simpanCount"></span></button>
+  <button class="hapus-btn" onclick="hapusSemua()">🗑️</button>
 </div>
 
 <!-- PREVIEW MODAL -->
 <div id="previewModal" class="qty-popup">
-  <div class="qp-card" style="width:92vw;max-width:480px">
+  <div class="qp-card">
     <div class="qp-title">📋 Preview Nota — Copy ke WA</div>
-    <div style="background:var(--surface2);border-radius:10px;padding:16px;font-size:13px;font-family:var(--mono);line-height:1.8;white-space:pre-wrap;max-height:60vh;overflow-y:auto;word-break:break-word" id="previewText"></div>
-    <div style="font-size:11px;color:var(--text3);text-align:center;padding:4px 0">Teks siap di-copy. Tempel di WhatsApp.</div>
+    <div style="background:var(--surface2);border-radius:9px;padding:14px;font-size:12px;font-family:var(--mono);line-height:1.8;white-space:pre-wrap;max-height:50vh;overflow-y:auto;word-break:break-word" id="previewText"></div>
+    <div style="font-size:11px;color:var(--text3);text-align:center">Teks siap di-copy.</div>
     <div class="qp-foot">
       <button class="qp-cancel" onclick="previewClose()">✕ Tutup</button>
       <button class="qp-ok" onclick="previewCopy()">📋 Copy &amp; Tutup</button>
@@ -158,28 +252,27 @@ input,button,textarea,select{font-size:16px!important}
 
 <!-- MODAL TAMBAH BARANG BARU -->
 <div class="qty-popup" id="newBarangModal">
-  <div class="qp-card" style="width:85vw;max-width:400px">
+  <div class="qp-card">
     <div class="qp-title">🆕 Tambah Barang Baru</div>
-    <input id="newBarangInput" type="text" placeholder="Nama barang..." style="width:100%;height:48px;border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-size:16px;font-family:var(--font);color:var(--text);background:var(--surface);outline:none" />
-    <div class="qp-foot" style="margin-top:0">
+    <input id="newBarangInput" type="text" placeholder="Nama barang..." style="width:100%;height:44px;border:1.5px solid var(--border);border-radius:9px;padding:0 14px;font-size:16px;color:var(--text);background:var(--surface);outline:none" />
+    <div class="qp-foot">
       <button class="qp-cancel" onclick="tutupNewBarang()">Batal</button>
       <button class="qp-ok" onclick="okNewBarang()">✅ Tambahkan</button>
     </div>
   </div>
 </div>
 
-<!-- PAGE ADMIN -->
-<div id="pageAdmin" class="page">
-  <div class="admin-toolbar">
-    <button class="a-btn primary" onclick="loadCatatan()">🔄 Refresh</button>
-    <button class="a-btn" onclick="exportCSV()">⬇️ Export CSV</button>
+<!-- MODAL KONFIRMASI SIMPAN -->
+<div class="qty-popup" id="konfirmasiModal">
+  <div class="qp-card">
+    <div class="qp-title">💾 Konfirmasi Simpan</div>
+    <div id="konfirmasiSummary" style="font-size:13px;color:var(--text2)"></div>
+    <div class="confirm-list" id="konfirmasiList"></div>
+    <div class="qp-foot">
+      <button class="qp-cancel" onclick="tutupKonfirmasi()">✕ Batal</button>
+      <button class="qp-danger" onclick="simpanSemua()">✅ Ya, Simpan</button>
+    </div>
   </div>
-  <div class="stat-row">
-    <div class="stat-card active" id="statCardTotal" onclick="setFilter('today')"><div class="stat-val" id="statTotal">-</div><div class="stat-lbl">Qty Hari Ini</div></div>
-    <div class="stat-card" id="statCardItem" onclick="setFilter('jenis')"><div class="stat-val" id="statItem">-</div><div class="stat-lbl">Jenis Barang</div></div>
-    <div class="stat-card" id="statCardNew" onclick="setFilter('baru')"><div class="stat-val" id="statNew">-</div><div class="stat-lbl">Barang Baru</div></div>
-  </div>
-  <div class="log-list" id="logList"><div class="empty">Klik Refresh untuk memuat data.</div></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -190,13 +283,17 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzFKC5ugFnHy77DdLf_E7_Q
 const CACHE_TTL = 10 * 60 * 1000;
 const LS_ITEMS = "cgudang_items", LS_NAMA = "cgudang_nama", LS_TGL = "cgudang_tgl";
 const LS_BARANG = "cgudang_barang", LS_CACHE_TIME = "cgudang_cache_t";
+const NAMA_PRESETS = ["Rudi","Ria","Haji","Wahyu","Dedi"];
 
 let allBarang = [], itemList = [], catatanData = [];
+let _scanBarang = null, _scanUnit = null, _scanQty = 1;
+let _scanner = null, _camOpen = false;
 
 // ========== INIT ==========
 window.addEventListener("DOMContentLoaded", init);
 
 async function init() {
+  // Clear stale data
   const savedTgl = localStorage.getItem(LS_TGL);
   if (savedTgl) {
     const savedDate = new Date(savedTgl + "T00:00:00");
@@ -204,20 +301,41 @@ async function init() {
       [LS_ITEMS, LS_NAMA, LS_TGL, LS_CACHE_TIME, LS_BARANG].forEach(k => localStorage.removeItem(k));
     }
   }
-  loadBarang();
+
+  // Render nama buttons
+  const savedNama = localStorage.getItem(LS_NAMA) || "";
+  const nbWrap = document.getElementById("namaBtns");
+  NAMA_PRESETS.forEach(n => {
+    const b = document.createElement("button");
+    b.className = "nama-btn" + (n === savedNama ? " active" : "");
+    b.textContent = n;
+    b.onclick = () => pilihNama(n);
+    nbWrap.appendChild(b);
+  });
+
+  // Tanggal
+  const tglInp = document.getElementById("tglInput");
+  tglInp.value = savedTgl || new Date().toISOString().slice(0,10);
+  tglInp.addEventListener("change", () => localStorage.setItem(LS_TGL, tglInp.value));
+
+  // Load saved items
   try {
     const saved = localStorage.getItem(LS_ITEMS);
     if (saved) { itemList = JSON.parse(saved); renderItemList(); }
   } catch(e) {}
-  const savedNama = localStorage.getItem(LS_NAMA);
-  if (savedNama) document.getElementById("namaKaryawan").value = savedNama;
-  document.getElementById("namaKaryawan").addEventListener("input", function() {
-    localStorage.setItem(LS_NAMA, this.value);
-  });
-  const tglInp = document.getElementById("tglInput");
-  tglInp.value = savedTgl || new Date().toISOString().slice(0,10);
-  tglInp.addEventListener("change", () => localStorage.setItem(LS_TGL, tglInp.value));
+
+  document.getElementById("subbar").style.display = "flex";
+  loadBarang();
 }
+
+function pilihNama(n) {
+  localStorage.setItem(LS_NAMA, n);
+  document.querySelectorAll(".nama-btn").forEach(b => {
+    b.classList.toggle("active", b.textContent === n);
+  });
+}
+
+function getNama() { return localStorage.getItem(LS_NAMA) || ""; }
 
 async function loadBarang() {
   const cached = localStorage.getItem(LS_BARANG);
@@ -232,11 +350,11 @@ async function loadBarang() {
   } catch(e) { allBarang = []; }
 }
 
-// ========== BEEP==========
+// ========== BEEP ==========
 function beepType(type) {
   try {
-    const ctx  = new (window.AudioContext || window.webkitAudioContext)();
-    const osc  = ctx.createOscillator();
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain); gain.connect(ctx.destination);
     if (type === 'dos') {
@@ -250,7 +368,6 @@ function beepType(type) {
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
       osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.15);
     } else {
-      // error / tidak ditemukan
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(400, ctx.currentTime);
       osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.3);
@@ -261,7 +378,134 @@ function beepType(type) {
   } catch(e) {}
 }
 
+// ========== CAMERA INLINE ==========
+async function toggleCamera() {
+  if (_camOpen) {
+    await stopCamera();
+  } else {
+    await startCamera();
+  }
+}
 
+async function startCamera() {
+  if (!window.Html5Qrcode) {
+    showToast("Memuat scanner...");
+    await new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  }
+  const zone = document.getElementById("camZone");
+  zone.classList.add("open");
+  document.getElementById("camToggle").classList.add("on");
+  _camOpen = true;
+
+  try {
+    _scanner = new Html5Qrcode('qr-reader');
+    await _scanner.start(
+      { facingMode: 'environment' },
+      { fps: 15, qrbox: { width: 260, height: 100 }, aspectRatio: 2.0 },
+      onScanSuccess,
+      () => {}
+    );
+  } catch(e) {
+    await stopCamera();
+    const code = prompt('📷 Kamera tidak tersedia. Masukkan barcode manual:');
+    if (code) { document.getElementById('searchInput').value = code.trim(); onSearch(code.trim()); }
+  }
+}
+
+async function stopCamera() {
+  try { if (_scanner) await _scanner.stop(); } catch(e) {}
+  _scanner = null;
+  _camOpen = false;
+  document.getElementById("camZone").classList.remove("open");
+  document.getElementById("camToggle").classList.remove("on");
+  hideScanResult();
+}
+
+function onScanSuccess(code) {
+  code = code.trim();
+  const byDus = allBarang.find(b => (b["Barcode Dos"] || b["Barcode Dus"] || "").toString().trim() === code);
+  const bySat = allBarang.find(b => (b["Barcode"] || "").toString().trim() === code);
+
+  if (byDus) {
+    beepType('dos');
+    showScanResult(byDus, byDus["Satuan Besar"] ?? "DOS");
+  } else if (bySat) {
+    beepType('pcs');
+    showScanResult(bySat, bySat["Satuan Kecil"] ?? "PCS");
+  } else {
+    beepType('error');
+    document.getElementById('searchInput').value = code;
+    onSearch(code);
+    showToast("❓ Tidak ditemukan: " + code, true);
+  }
+}
+
+function showScanResult(barang, defaultUnit) {
+  _scanBarang = barang;
+  _scanQty = 1;
+  const isiDos = parseInt(barang["Isi per Dos"] ?? barang["Isi per Dus"] ?? 0) || 0;
+  const sK = barang["Satuan Kecil"] ?? "PCS";
+  const sB = barang["Satuan Besar"] ?? "DOS";
+
+  document.getElementById("scanItemName").textContent = barang["Nama Barang"] || "—";
+  document.getElementById("scanQty").textContent = "1";
+
+  const hasDus = isiDos > 0;
+  const dosBtn = document.getElementById("scanUnitDos");
+  const pcsBtn = document.getElementById("scanUnitPcs");
+  dosBtn.textContent = sB;
+  pcsBtn.textContent = sK;
+  dosBtn.style.display = hasDus ? "" : "none";
+  pcsBtn.classList.toggle("active", !hasDus || defaultUnit === sK);
+  dosBtn.classList.toggle("active", hasDus && defaultUnit === sB);
+  _scanUnit = defaultUnit;
+
+  const bar = document.getElementById("scanResultBar");
+  bar.classList.add("show");
+  // Adjust sticky top for result bar below cam zone
+  const camH = document.getElementById("camZone").offsetHeight;
+  bar.style.top = (44 + 38 + camH) + "px"; // topbar + subbar + cam
+}
+
+function hideScanResult() {
+  _scanBarang = null;
+  document.getElementById("scanResultBar").classList.remove("show");
+}
+
+function setScanUnit(type) {
+  if (!_scanBarang) return;
+  const sK = _scanBarang["Satuan Kecil"] ?? "PCS";
+  const sB = _scanBarang["Satuan Besar"] ?? "DOS";
+  _scanUnit = type === 'dos' ? sB : sK;
+  document.getElementById("scanUnitDos").classList.toggle("active", type === 'dos');
+  document.getElementById("scanUnitPcs").classList.toggle("active", type === 'pcs');
+}
+
+function chgScanQty(d) {
+  _scanQty = Math.max(1, _scanQty + d);
+  document.getElementById("scanQty").textContent = _scanQty;
+}
+
+function addScanItem() {
+  if (!_scanBarang) return;
+  const b = _scanBarang;
+  const isiDos = parseInt(b["Isi per Dos"] ?? b["Isi per Dus"] ?? 0) || 0;
+  const sK = b["Satuan Kecil"] ?? b["Satuan"] ?? "PCS";
+  const sB = b["Satuan Besar"] ?? "DOS";
+  addOrMergeItem({
+    plu: b["PLU"] ?? "", nama: b["Nama Barang"] ?? "", merk: b["Merk"] ?? "",
+    qty: _scanQty, unit: _scanUnit || sK,
+    isiPerDos: isiDos, satuanKecil: sK, satuanBesar: sB,
+    isiKemasan: b["Isi Kemasan"] ?? "", hasDus: isiDos > 0
+  });
+  hideScanResult();
+  showToast("✅ " + (b["Nama Barang"] || "") + " +" + _scanQty, false, true);
+}
 
 // ========== SEARCH ==========
 function onSearch(q) {
@@ -309,14 +553,12 @@ function mkResultItem(ico, isNew, name, meta, badge, badgeClass) {
 
 // ========== ITEM LIST ==========
 function pilihBarang(b) {
-  const searchVal = (document.getElementById("searchInput").value || "").trim();
-  const isDusBarcode = searchVal && ((b["Barcode Dus"] || b["Barcode Dos"] || "").toString().trim() === searchVal);
-  const isiDos = parseInt(b["Isi per Dus"] ?? b["Isi per Dos"] ?? 0) || 0;
+  const isiDos = parseInt(b["Isi per Dos"] ?? b["Isi per Dus"] ?? 0) || 0;
   const sK = b["Satuan Kecil"] ?? b["Satuan"] ?? "PCS";
   const sB = b["Satuan Besar"] ?? "DOS";
-  addItem({
+  addOrMergeItem({
     plu: b["PLU"] ?? "", nama: b["Nama Barang"] ?? "", merk: b["Merk"] ?? "",
-    qty: 1, unit: isDusBarcode ? sB : (isiDos > 0 ? sB : sK),
+    qty: 1, unit: isiDos > 0 ? sB : sK,
     isiPerDos: isiDos, satuanKecil: sK, satuanBesar: sB,
     isiKemasan: b["Isi Kemasan"] ?? "", hasDus: isiDos > 0
   });
@@ -325,18 +567,21 @@ function pilihBarang(b) {
   document.getElementById("searchInput").focus();
 }
 
-function pilihBarangDenganUnit(b, forcedUnit) {
-  const isiDos = parseInt(b["Isi per Dos"] ?? 0) || 0;
-  const sK = b["Satuan Kecil"] ?? "PCS";
-  const sB = b["Satuan Besar"] ?? "DOS";
-  addItem({
-    plu: b["PLU"] ?? "", nama: b["Nama Barang"] ?? "", merk: b["Merk"] ?? "",
-    qty: 1, unit: forcedUnit,
-    isiPerDos: isiDos, satuanKecil: sK, satuanBesar: sB,
-    isiKemasan: b["Isi Kemasan"] ?? "", hasDus: isiDos > 0
-  });
-  document.getElementById("searchResults").innerHTML = "";
-  document.getElementById("searchInput").value = "";
+// DUPLIKAT: kalau PLU+unit sama, tambah qty
+function addOrMergeItem(item) {
+  const existing = itemList.findIndex(x =>
+    x.plu && x.plu === item.plu && x.unit === item.unit && !x.isNew
+  );
+  if (existing >= 0) {
+    itemList[existing].qty += item.qty;
+    renderItemList();
+    localStorage.setItem(LS_ITEMS, JSON.stringify(itemList));
+    showToast("+" + item.qty + " " + item.unit + " → " + item.nama, false, true);
+  } else {
+    itemList.push(item);
+    renderItemList();
+    localStorage.setItem(LS_ITEMS, JSON.stringify(itemList));
+  }
 }
 
 let _newBarangQuery = "";
@@ -349,57 +594,26 @@ function tambahBarangBaru(query) {
 function okNewBarang() {
   const nama = document.getElementById("newBarangInput").value.trim();
   if (!nama) { showToast("Tulis nama barang!", true); return; }
-  addItem({plu:"NEW-"+Date.now(), nama, merk:"", qty:1, unit:"PCS", isiPerDos:0, satuanKecil:"PCS", satuanBesar:"DOS", isiKemasan:"", hasDus:false, isNew:true});
+  itemList.push({plu:"NEW-"+Date.now(), nama, merk:"", qty:1, unit:"PCS", isiPerDos:0, satuanKecil:"PCS", satuanBesar:"DOS", isiKemasan:"", hasDus:false, isNew:true});
+  renderItemList();
+  localStorage.setItem(LS_ITEMS, JSON.stringify(itemList));
   tutupNewBarang();
   document.getElementById("searchResults").innerHTML = "";
   document.getElementById("searchInput").value = "";
 }
 function tutupNewBarang() { document.getElementById("newBarangModal").classList.remove("show"); }
 
-function addItem(item) { itemList.push(item); renderItemList(); localStorage.setItem(LS_ITEMS, JSON.stringify(itemList)); }
 function removeItem(idx) { itemList.splice(idx, 1); renderItemList(); localStorage.setItem(LS_ITEMS, JSON.stringify(itemList)); }
-function hapusSemua() { if (!itemList.length) return; itemList = []; localStorage.removeItem(LS_ITEMS); renderItemList(); showToast("🗑️ Semua dihapus"); }
-
-function renderItemList() {
-  const el = document.getElementById("itemList");
-  const card = document.getElementById("cardItems");
-  const btn = document.getElementById("simpanSemuaBtn");
-  const btnH = document.getElementById("hapusSemuaBtn");
-  if (!itemList.length) { card.style.display="none"; btn.style.display="none"; btnH.style.display="none"; return; }
-  card.style.display="block"; btn.style.display="block"; btnH.style.display="block";
-  document.getElementById("itemCount").textContent = `(${itemList.length} item)`;
-  el.innerHTML = "";
-  itemList.forEach((item, i) => {
-    const pcsTotal = item.unit === item.satuanBesar ? item.qty * (item.isiPerDos || 1) : item.qty;
-    const div = document.createElement("div");
-    div.className = "item-entry";
-    div.style.flexWrap = "wrap";
-    div.innerHTML = `
-      <div style="display:flex;align-items:center;gap:8px;width:100%">
-        <span style="font-size:16px;flex-shrink:0">📦</span>
-        <div style="flex:1;min-width:0">
-          <div class="item-entry ie-name">${esc(item.nama)}</div>
-          <div class="item-entry ie-qty" style="font-size:11px;color:var(--text3)">${item.isiPerDos ? esc(item.isiPerDos)+' per '+esc(item.satuanBesar) : 'Satuan: '+esc(item.satuanKecil)}</div>
-        </div>
-        <span class="ie-del" onclick="removeItem(${i})">✕</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;width:100%;margin-top:4px">
-        ${item.hasDus ? `<button class="ie-unit ${item.unit===item.satuanBesar?'active':''}" onclick="toggleUnit(${i})">${esc(item.satuanBesar)}</button><button class="ie-unit ${item.unit===item.satuanKecil?'active':''}" onclick="toggleUnit(${i})">${esc(item.satuanKecil)}</button>` : `<span style="font-size:12px;color:var(--text3);font-weight:600">${esc(item.satuanKecil)}</span>`}
-        <div style="display:flex;align-items:center;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-left:auto">
-          <button class="ie-unit" onclick="chgItemQty(${i},-1)" style="border:none;border-radius:0;background:var(--surface2);padding:6px 12px;font-size:18px">−</button>
-          <span style="padding:6px 14px;font-family:var(--mono);font-size:15px;font-weight:700;min-width:40px;text-align:center">${item.qty}</span>
-          <button class="ie-unit" onclick="chgItemQty(${i},1)" style="border:none;border-radius:0;background:var(--surface2);padding:6px 12px;font-size:18px">+</button>
-        </div>
-        <span style="font-size:11px;color:var(--text3);font-family:var(--mono);flex-shrink:0">${pcsTotal} ${esc(item.satuanKecil)}</span>
-      </div>`;
-    el.appendChild(div);
-  });
-  btn.style.display = "block";
-  document.getElementById("simpanCount").textContent = `(${itemList.length} item)`;
+function hapusSemua() {
+  if (!itemList.length) return;
+  if (!confirm("Hapus semua " + itemList.length + " item?")) return;
+  itemList = []; localStorage.removeItem(LS_ITEMS); renderItemList();
+  showToast("🗑️ Semua dihapus");
 }
 
-function toggleUnit(idx) {
+function toggleUnitItem(idx) {
   const item = itemList[idx];
+  if (!item.hasDus) return;
   item.unit = item.unit === item.satuanBesar ? item.satuanKecil : item.satuanBesar;
   renderItemList(); localStorage.setItem(LS_ITEMS, JSON.stringify(itemList));
 }
@@ -408,11 +622,72 @@ function chgItemQty(idx, delta) {
   renderItemList(); localStorage.setItem(LS_ITEMS, JSON.stringify(itemList));
 }
 
-// ========== SIMPAN ==========
-async function simpanSemua() {
-  const nama = document.getElementById("namaKaryawan").value.trim();
-  if (!nama) { showToast("Tulis nama kamu dulu!", true); return; }
+function renderItemList() {
+  const el = document.getElementById("itemList");
+  const card = document.getElementById("cardItems");
+  const saveBar = document.getElementById("saveBar");
+  const counter = document.getElementById("topCounter");
+
+  if (!itemList.length) {
+    card.style.display = "none";
+    saveBar.classList.remove("show");
+    counter.classList.remove("show");
+    return;
+  }
+
+  card.style.display = "block";
+  saveBar.classList.add("show");
+  counter.textContent = itemList.length;
+  counter.classList.add("show");
+  document.getElementById("itemCount").textContent = itemList.length + " item";
+  document.getElementById("simpanCount").textContent = "(" + itemList.length + ")";
+
+  el.innerHTML = "";
+  itemList.forEach((item, i) => {
+    const isDos = item.unit === item.satuanBesar;
+    const pcsTotal = isDos ? item.qty * (item.isiPerDos || 1) : item.qty;
+    const unitClass = isDos ? "dos" : "pcs";
+    const metaInfo = item.isiPerDos ? (item.isiPerDos + "/" + item.satuanBesar) : item.satuanKecil;
+    const div = document.createElement("div");
+    div.className = "item-row";
+    div.innerHTML = `
+      <span class="ir-num">${i+1}</span>
+      <div class="ir-name">
+        <div class="ir-name-txt">${esc(item.nama)}</div>
+        <div class="ir-meta">${esc(item.merk||"—")} · ${esc(metaInfo)}</div>
+      </div>
+      <button class="ir-unit ${unitClass}" onclick="toggleUnitItem(${i})" ${!item.hasDus?'style="cursor:default;opacity:.6"':''}>${esc(item.unit)}</button>
+      <div class="ir-stepper">
+        <button onclick="chgItemQty(${i},-1)">−</button>
+        <span>${item.qty}</span>
+        <button onclick="chgItemQty(${i},1)">+</button>
+      </div>
+      <div class="ir-total">${pcsTotal}<br>${esc(item.satuanKecil)}</div>
+      <span class="ir-del" onclick="removeItem(${i})">✕</span>`;
+    el.appendChild(div);
+  });
+}
+
+// ========== KONFIRMASI + SIMPAN ==========
+function konfirmasiSimpan() {
+  const nama = getNama();
+  if (!nama) { showToast("Pilih nama dulu!", true); return; }
   if (!itemList.length) { showToast("Belum ada barang", true); return; }
+  const totalPcs = itemList.reduce((s, item) => s + (item.unit === item.satuanBesar ? item.qty * (item.isiPerDos || 1) : item.qty), 0);
+  document.getElementById("konfirmasiSummary").textContent =
+    "👷 " + nama + "  |  " + itemList.length + " jenis  |  " + totalPcs + " pcs total";
+  let listTxt = "";
+  itemList.forEach((item, i) => {
+    listTxt += (i+1) + ". " + item.nama + " — " + item.qty + " " + item.unit + "\n";
+  });
+  document.getElementById("konfirmasiList").textContent = listTxt.trim();
+  document.getElementById("konfirmasiModal").classList.add("show");
+}
+function tutupKonfirmasi() { document.getElementById("konfirmasiModal").classList.remove("show"); }
+
+async function simpanSemua() {
+  tutupKonfirmasi();
+  const nama = getNama();
   const btn = document.getElementById("simpanSemuaBtn");
   btn.disabled = true; btn.textContent = "Menyimpan...";
   let success = 0, failed = 0;
@@ -424,19 +699,20 @@ async function simpanSemua() {
         action:"simpanCatatan", karyawan:nama, plu:item.plu||"", namaBarang:item.nama,
         merk:item.merk||"", satuanInput:item.unit, jumlahInput:item.qty,
         isiPerDus:item.isiPerDos||0, isiKemasan:item.isiKemasan||"", totalPcs,
-        catatan:`${item.qty} ${item.unit}`, statusBarang:item.isNew?"Barang Baru":"Ada di DB"
+        catatan:item.qty+" "+item.unit, statusBarang:item.isNew?"Barang Baru":"Ada di DB"
       }) });
       success++;
     } catch(e) { failed++; }
   }
   btn.disabled = false;
   if (failed === 0) {
-    showToast(`✅ ${success} item berhasil disimpan!`);
+    showToast("✅ " + success + " item berhasil disimpan!", false, true);
     itemList = []; localStorage.removeItem(LS_ITEMS); renderItemList();
     showPreview(savedItems, nama);
   } else {
-    showToast(`${success} sukses, ${failed} gagal`, true);
-    btn.textContent = `✅ Simpan Semua (${itemList.length} item)`;
+    showToast(success + " sukses, " + failed + " gagal", true);
+    document.getElementById("simpanCount").textContent = "(" + itemList.length + ")";
+    btn.textContent = "✅ Simpan Semua";
   }
 }
 
@@ -445,14 +721,14 @@ function showPreview(items, nama) {
   const tgl = document.getElementById("tglInput").value;
   const tglF = new Date(tgl+"T00:00:00").toLocaleDateString("id-ID", {day:"numeric",month:"long",year:"numeric"});
   let txt = "📦 *CATATAN BARANG MASUK*\n━━━━━━━━━━━━━━━━━━\n";
-  txt += `📅 ${tglF}\n👷 ${nama}\n━━━━━━━━━━━━━━━━━━\n\n`;
+  txt += "📅 " + tglF + "\n👷 " + nama + "\n━━━━━━━━━━━━━━━━━━\n\n";
   items.forEach((item, idx) => {
-    const pcsInfo = item.unit === item.satuanBesar && item.isiPerDos ? ` (${item.isiPerDos} ${item.satuanKecil}/${item.satuanBesar})` : "";
+    const pcsInfo = item.unit === item.satuanBesar && item.isiPerDos ? " (" + item.isiPerDos + " " + item.satuanKecil + "/" + item.satuanBesar + ")" : "";
     const tpcs = item.unit === item.satuanBesar ? item.qty * (item.isiPerDos || 1) : item.qty;
-    txt += `${idx+1}. ${item.nama}\n   → ${item.qty} ${item.unit}${pcsInfo} = ${tpcs} ${item.satuanKecil}\n`;
+    txt += (idx+1) + ". " + item.nama + "\n   → " + item.qty + " " + item.unit + pcsInfo + " = " + tpcs + " " + item.satuanKecil + "\n";
   });
   const totalPcs = items.reduce((s,item) => s + (item.unit===item.satuanBesar?item.qty*(item.isiPerDos||1):item.qty), 0);
-  txt += `\n━━━━━━━━━━━━━━━━━━\n📊 Total: ${items.length} jenis | ${totalPcs} ${items[0]?.satuanKecil||"pcs"}\n✅ Disimpan ${new Date().toLocaleTimeString("id-ID")} WITA`;
+  txt += "\n━━━━━━━━━━━━━━━━━━\n📊 Total: " + items.length + " jenis | " + totalPcs + " " + (items[0]?.satuanKecil||"pcs") + "\n✅ Disimpan " + new Date().toLocaleTimeString("id-ID") + " WITA";
   document.getElementById("previewText").textContent = txt;
   document.getElementById("previewModal").classList.add("show");
   window._previewTxt = txt;
@@ -460,15 +736,19 @@ function showPreview(items, nama) {
 function previewClose() { document.getElementById("previewModal").classList.remove("show"); }
 function previewCopy() {
   if (!window._previewTxt) return;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(window._previewTxt).catch(() => legacyCopy(window._previewTxt));
+  } else { legacyCopy(window._previewTxt); }
+  showToast("✅ Copied! Tempel di WA group", false, true); previewClose();
+}
+function legacyCopy(txt) {
   const ta = document.createElement("textarea");
-  ta.value = window._previewTxt; document.body.appendChild(ta); ta.select();
+  ta.value = txt; document.body.appendChild(ta); ta.select();
   document.execCommand("copy"); document.body.removeChild(ta);
-  showToast("✅ Copied! Tempel di WA group"); previewClose();
 }
 
 // ========== ADMIN ==========
 let _filter = "today";
-
 function setFilter(f) {
   _filter = f;
   document.querySelectorAll(".stat-card").forEach(el => el.classList.remove("active"));
@@ -491,18 +771,13 @@ function renderLog(data) {
   const today = new Date();
   const ts = String(today.getDate()).padStart(2,"0")+"/"+String(today.getMonth()+1).padStart(2,"0")+"/"+today.getFullYear();
   const td = data.filter(d => String(d["Tanggal"]||"").startsWith(ts));
-
-  // Always update stats
   document.getElementById("statTotal").textContent = td.reduce((s,d)=>s+(Number(d["Jumlah Input"]??d["Jumlah"])||0),0);
   document.getElementById("statItem").textContent = new Set(td.map(d=>d["PLU"]||d["Nama Barang"])).size;
   document.getElementById("statNew").textContent = data.filter(d=>d["Status Barang"]==="Barang Baru").length;
-
-  // Filter view
   let filtered;
   if (_filter === "baru") {
     filtered = data.filter(d => d["Status Barang"] === "Barang Baru");
   } else if (_filter === "jenis") {
-    // Group by PLU/Nama Barang, count total pcs
     const map = {};
     data.forEach(d => {
       const key = d["Nama Barang"] || d["PLU"] || "?";
@@ -513,45 +788,23 @@ function renderLog(data) {
     });
     filtered = Object.values(map).sort((a,b) => b.qty - a.qty);
   } else {
-    filtered = data; // today / all
+    filtered = data;
   }
-
   const list = document.getElementById("logList");
   if (!filtered.length) { list.innerHTML = '<div class="empty">Belum ada catatan.</div>'; return; }
   list.innerHTML = "";
-
   if (_filter === "jenis") {
-    // Render grouped view
     filtered.forEach(d => {
       const el = document.createElement("div");
       el.className = "log-item";
-      el.innerHTML = `
-        <div class="log-top">
-          <div class="log-name">${esc(d.nama)}</div>
-          <div class="log-qty">${d.qty} pcs</div>
-        </div>
-        <div class="log-meta">
-          <span>📅 ${esc(d.lastDate)}</span>
-          <span>👷 ${esc(d.lastKaryawan)}</span>
-        </div>`;
+      el.innerHTML = `<div class="log-top"><div class="log-name">${esc(d.nama)}</div><div class="log-qty">${d.qty} pcs</div></div><div class="log-meta"><span>📅 ${esc(d.lastDate)}</span><span>👷 ${esc(d.lastKaryawan)}</span></div>`;
       list.appendChild(el);
     });
   } else {
-    // Standard list view (today / baru)
     filtered.forEach(d => {
       const el = document.createElement("div");
       el.className = "log-item";
-      el.innerHTML = `
-        <div class="log-top">
-          <div class="log-name">${esc(d["Nama Barang"]||"-")}</div>
-          <div class="log-qty">+${esc(String(d["Jumlah Input"]??d["Jumlah"]??0))} ${esc(d["Satuan Input"]??d["Satuan"]??"")}</div>
-        </div>
-        <div class="log-meta">
-          <span>🕐 ${esc(d["Tanggal"]||"")} ${esc(d["Jam"]||"")}</span>
-          <span>👷 ${esc(d["Karyawan"]??d["Nama Karyawan"]??"")}</span>
-          ${d["Status Barang"]==="Barang Baru"?'<span class="log-badge">BARU</span>':""}
-          ${d["Catatan"]?`<span>💬 ${esc(d["Catatan"])}</span>`:""}
-        </div>`;
+      el.innerHTML = `<div class="log-top"><div class="log-name">${esc(d["Nama Barang"]||"-")}</div><div class="log-qty">+${esc(String(d["Jumlah Input"]??d["Jumlah"]??0))} ${esc(d["Satuan Input"]??d["Satuan"]??"")}</div></div><div class="log-meta"><span>🕐 ${esc(d["Tanggal"]||"")} ${esc(d["Jam"]||"")}</span><span>👷 ${esc(d["Karyawan"]??d["Nama Karyawan"]??"")}</span>${d["Status Barang"]==="Barang Baru"?'<span class="log-badge">BARU</span>':""}${d["Catatan"]?`<span>💬 ${esc(d["Catatan"])}</span>`:""}</div>`;
       list.appendChild(el);
     });
   }
@@ -563,7 +816,7 @@ function exportCSV() {
   const csv = [H.join(","),...rows].join("\n");
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"}));
-  a.download = `catatan-gudang-${new Date().toISOString().slice(0,10)}.csv`; a.click();
+  a.download = "catatan-gudang-"+new Date().toISOString().slice(0,10)+".csv"; a.click();
 }
 
 // ========== UTILS ==========
@@ -573,91 +826,18 @@ function showPage(p) {
   document.getElementById(p==="catat"?"pageCatat":"pageAdmin").classList.add("on");
   document.querySelectorAll(".tab")[p==="catat"?0:1].classList.add("on");
   if (p === "admin") loadCatatan();
+  if (p === "catat") document.getElementById("subbar").style.display = "flex";
+  else document.getElementById("subbar").style.display = "none";
 }
-function showToast(msg, isErr) {
+
+let _toastT;
+function showToast(msg, isErr, isOk) {
   const t = document.getElementById("toast");
-  t.textContent = msg; t.className = "toast show" + (isErr?" err":"");
-  clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove("show"), 3000);
+  t.textContent = msg;
+  t.className = "toast show" + (isErr?" err":(isOk?" ok":""));
+  clearTimeout(_toastT); _toastT = setTimeout(()=>t.classList.remove("show"), 2500);
 }
 function esc(s) { return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
-
-async function scanBarcode() {
-  if (!window.Html5Qrcode) {
-    showToast("Memuat scanner...");
-    await new Promise((res, rej) => {
-      const s = document.createElement('script');
-      s.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
-      s.onload = res; s.onerror = rej;
-      document.head.appendChild(s);
-    });
-  }
-
-  const overlay = document.createElement('div');
-  overlay.style.cssText = `position:fixed;inset:0;background:#000;z-index:9999;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    padding:16px;gap:12px`;
-  overlay.innerHTML = `
-    <div id="qr-reader" style="width:100%;max-width:400px;border-radius:12px;overflow:hidden"></div>
-    <div style="color:#aaa;font-size:14px;text-align:center">
-      📷 Arahkan kamera ke barcode
-    </div>
-    <button id="btnScanCancel" style="width:100%;max-width:400px;padding:14px;
-      border-radius:10px;background:#D4500A;color:#fff;border:none;
-      font-size:16px;font-weight:800;cursor:pointer;font-family:var(--font)">
-      ✕ Batal
-    </button>`;
-  document.body.appendChild(overlay);
-
-  let scanner;
-  const cleanup = async () => {
-    try { if (scanner) await scanner.stop(); } catch(e) {}
-    if (overlay.parentNode) overlay.remove();
-  };
-  document.getElementById('btnScanCancel').onclick = cleanup;
-
-  try {
-    scanner = new Html5Qrcode('qr-reader');
-    await scanner.start(
-      { facingMode: 'environment' },
-      { fps: 15, qrbox: { width: 280, height: 120 }, aspectRatio: 1.5 },
-      async (decodedText) => {
-        await cleanup();
-        const code = decodedText.trim();
-
-        const byDus = allBarang.find(b =>
-          (b["Barcode Dos"] || "").toString().trim() === code
-        );
-        const bySat = allBarang.find(b =>
-          (b["Barcode"] || "").toString().trim() === code
-        );
-
-        if (byDus) {
-          pilihBarangDenganUnit(byDus, byDus["Satuan Besar"] ?? "DOS");
-		  beepType('dos');
-          showToast("📦 DOS → " + byDus["Nama Barang"]);
-        } else if (bySat) {
-          pilihBarangDenganUnit(bySat, bySat["Satuan Kecil"] ?? "PCS");
-		  beepType('pcs');
-          showToast("🔹 PCS → " + bySat["Nama Barang"]);
-        } else {
-          document.getElementById('searchInput').value = code;
-          onSearch(code);
-		  beepType('error');
-          showToast("❓ Tidak ditemukan: " + code, true);
-        }
-      },
-      () => {}
-    );
-  } catch(e) {
-    await cleanup();
-    // Fallback: input manual jika kamera tidak bisa dibuka
-    const code = prompt('📷 Kamera tidak tersedia. Masukkan barcode manual:');
-    if (code) {
-      document.getElementById('searchInput').value = code.trim();
-      onSearch(code.trim());
-    }
-  }
-}
 </script>
 </body>
 </html>
