@@ -31,7 +31,7 @@ input,button,textarea,select{font-size:16px!important;font-family:var(--font)}
 .tab{font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.25);background:transparent;color:rgba(255,255,255,0.6);cursor:pointer;font-family:var(--font);font-weight:600;min-height:32px}
 .tab.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 
-/* SUBBAR — nama + tanggal + kamera toggle */
+/* SUBBAR */
 .subbar{background:var(--surface);border-bottom:2px solid var(--border);padding:6px 12px;display:flex;align-items:center;gap:8px;position:sticky;top:44px;z-index:190}
 .subbar-nama{flex:1;min-width:0;display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .subbar-nama::-webkit-scrollbar{display:none}
@@ -41,12 +41,24 @@ input,button,textarea,select{font-size:16px!important;font-family:var(--font)}
 .cam-toggle{width:36px;height:32px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);font-size:18px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .cam-toggle.on{background:var(--accent);border-color:var(--accent)}
 
-/* CAMERA ZONE — inline sticky */
+/* CAMERA ZONE inline */
 .cam-zone{background:#000;overflow:hidden;transition:max-height .3s ease;max-height:0;position:sticky;top:82px;z-index:180}
-.cam-zone.open{max-height:200px}
-#qr-reader{width:100%;max-height:200px}
-#qr-reader video{max-height:200px!important;object-fit:cover}
-#qr-reader canvas{max-height:200px!important}
+.cam-zone.open{max-height:220px}
+
+/* Native scanner canvas */
+#nativeVideo{width:100%;max-height:220px;display:block;object-fit:cover}
+#nativeCanvas{display:none}
+
+/* Html5Qrcode fallback */
+#qr-reader{width:100%;max-height:220px}
+#qr-reader video{max-height:220px!important;object-fit:cover}
+#qr-reader canvas{max-height:220px!important}
+
+/* scanner overlay: mode badge */
+.scan-mode-badge{position:absolute;top:6px;right:8px;background:rgba(0,0,0,.55);color:#fff;font-size:10px;font-family:var(--mono);padding:2px 8px;border-radius:4px;pointer-events:none;z-index:5}
+.cam-zone{position:relative}
+
+/* SCAN RESULT BAR */
 .scan-result-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 12px;display:none;flex-direction:column;gap:6px;position:sticky;top:82px;z-index:175}
 .scan-result-bar.show{display:flex}
 .scan-item-name{font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -84,10 +96,12 @@ input,button,textarea,select{font-size:16px!important;font-family:var(--font)}
 .b-blue{background:var(--blue-light);color:var(--blue)}
 .b-yellow{background:var(--yellow-light);color:var(--yellow)}
 
-/* ITEM LIST — COMPACT */
+/* ITEM LIST */
 .item-list{display:flex;flex-direction:column;gap:2px}
 .item-row{display:flex;align-items:center;gap:6px;padding:7px 10px;background:var(--surface);border-bottom:1px solid var(--border);min-height:44px}
 .item-row:first-child{border-top:1px solid var(--border)}
+.item-row.flash{animation:rowflash .5s}
+@keyframes rowflash{0%,100%{background:var(--surface)}40%{background:var(--green-light)}}
 .ir-num{font-family:var(--mono);font-size:11px;color:var(--text3);width:18px;flex-shrink:0;text-align:right}
 .ir-name{flex:1;min-width:0}
 .ir-name-txt{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
@@ -118,16 +132,13 @@ input,button,textarea,select{font-size:16px!important;font-family:var(--font)}
 .qp-ok{background:var(--green);color:#fff}
 .qp-cancel{background:var(--surface2);color:var(--text2);border:1px solid var(--border)!important}
 .qp-danger{background:var(--accent);color:#fff}
-
-/* CONFIRM MODAL */
-.confirm-list{background:var(--surface2);border-radius:8px;padding:10px 12px;font-size:12px;font-family:var(--mono);max-height:160px;overflow-y:auto;line-height:1.7;color:var(--text2);white-space:pre-line;display:block}
+.confirm-list{background:var(--surface2);border-radius:8px;padding:10px 12px;font-size:12px;font-family:var(--mono);max-height:160px;overflow-y:auto;line-height:1.7;color:var(--text2)}
 
 /* TOAST */
 .toast{position:fixed;bottom:76px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--text);color:#fff;padding:10px 18px;border-radius:9px;font-size:13px;font-weight:600;z-index:400;transition:transform .25s;white-space:nowrap;pointer-events:none}
 .toast.show{transform:translateX(-50%) translateY(0)}
 .toast.err{background:var(--accent-dark)}
 .toast.ok{background:var(--green)}
-/* UNDO TOAST */
 .undo-toast{position:fixed;bottom:76px;left:12px;right:12px;background:#2A2520;color:#fff;padding:10px 12px 10px 14px;border-radius:9px;font-size:13px;font-weight:600;z-index:400;display:flex;align-items:center;justify-content:space-between;gap:10px;transform:translateY(120px);transition:transform .25s;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.25)}
 .undo-toast.show{transform:translateY(0);pointer-events:auto}
 .undo-msg{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -170,7 +181,7 @@ input,button,textarea,select{font-size:16px!important;font-family:var(--font)}
   </div>
 </div>
 
-<!-- SUBBAR: nama + tanggal + kamera -->
+<!-- SUBBAR -->
 <div class="subbar" id="subbar" style="display:none">
   <div class="subbar-nama" id="namaBtns"></div>
   <input id="tglInput" type="date" class="tgl-input" />
@@ -180,8 +191,14 @@ input,button,textarea,select{font-size:16px!important;font-family:var(--font)}
 
 <!-- CAMERA ZONE inline -->
 <div class="cam-zone" id="camZone">
+  <span class="scan-mode-badge" id="scanModeBadge"></span>
+  <!-- Native BarcodeDetector path -->
+  <video id="nativeVideo" autoplay playsinline muted></video>
+  <canvas id="nativeCanvas"></canvas>
+  <!-- Html5Qrcode fallback path -->
   <div id="qr-reader"></div>
 </div>
+
 <!-- SCAN RESULT BAR -->
 <div class="scan-result-bar" id="scanResultBar">
   <div class="scan-item-name" id="scanItemName">—</div>
@@ -200,7 +217,6 @@ input,button,textarea,select{font-size:16px!important;font-family:var(--font)}
 <!-- PAGE CATAT -->
 <div id="pageCatat" class="page on">
   <div class="inner">
-
     <div class="card">
       <div class="card-hd">🔍 Cari Barang</div>
       <div class="card-bd">
@@ -213,7 +229,6 @@ input,button,textarea,select{font-size:16px!important;font-family:var(--font)}
         <div id="searchResults"></div>
       </div>
     </div>
-
     <div class="card" id="cardItems" style="display:none">
       <div class="card-hd" style="display:flex;align-items:center;justify-content:space-between">
         <span>📋 Barang Dicatat</span>
@@ -221,7 +236,6 @@ input,button,textarea,select{font-size:16px!important;font-family:var(--font)}
       </div>
       <div class="item-list" id="itemList"></div>
     </div>
-
   </div>
 </div>
 
@@ -239,7 +253,7 @@ input,button,textarea,select{font-size:16px!important;font-family:var(--font)}
   <div class="log-list" id="logList"><div class="empty">Klik Refresh untuk memuat data.</div></div>
 </div>
 
-<!-- SAVE BAR (bottom fixed) -->
+<!-- SAVE BAR -->
 <div class="save-bar" id="saveBar">
   <button class="simpan-btn" id="simpanSemuaBtn" onclick="konfirmasiSimpan()">✅ Simpan Semua <span id="simpanCount"></span></button>
   <button class="hapus-btn" onclick="hapusSemua()">🗑️</button>
@@ -304,15 +318,27 @@ const LS_ITEMS = "cgudang_items", LS_NAMA = "cgudang_nama", LS_TGL = "cgudang_tg
 const LS_BARANG = "cgudang_barang", LS_CACHE_TIME = "cgudang_cache_t";
 const NAMA_PRESETS = ["Rudi","Ria","Haji"];
 
+// Throttle scan — jangan proses kode yang sama < 2.5 detik
+const SCAN_COOLDOWN = 2500;
+
 let allBarang = [], itemList = [], catatanData = [];
 let _scanBarang = null, _scanUnit = null, _scanQty = 1;
-let _scanner = null, _camOpen = false;
+
+// Camera state
+let _camOpen = false;
+let _scanMode = null; // 'native' | 'html5qr'
+
+// Native BarcodeDetector
+let _nativeStream = null, _nativeRafId = null, _nativeDetector = null;
+let _lastScanCode = null, _lastScanTime = 0;
+
+// Html5Qrcode fallback
+let _html5Scanner = null;
 
 // ========== INIT ==========
 window.addEventListener("DOMContentLoaded", init);
 
 async function init() {
-  // Clear stale data
   const savedTgl = localStorage.getItem(LS_TGL);
   if (savedTgl) {
     const savedDate = new Date(savedTgl + "T00:00:00");
@@ -321,7 +347,6 @@ async function init() {
     }
   }
 
-  // Render nama buttons
   const savedNama = localStorage.getItem(LS_NAMA) || "";
   const nbWrap = document.getElementById("namaBtns");
   NAMA_PRESETS.forEach(n => {
@@ -332,12 +357,10 @@ async function init() {
     nbWrap.appendChild(b);
   });
 
-  // Tanggal
   const tglInp = document.getElementById("tglInput");
   tglInp.value = savedTgl || new Date().toISOString().slice(0,10);
   tglInp.addEventListener("change", () => localStorage.setItem(LS_TGL, tglInp.value));
 
-  // Load saved items
   try {
     const saved = localStorage.getItem(LS_ITEMS);
     if (saved) { itemList = JSON.parse(saved); renderItemList(); }
@@ -349,11 +372,8 @@ async function init() {
 
 function pilihNama(n) {
   localStorage.setItem(LS_NAMA, n);
-  document.querySelectorAll(".nama-btn").forEach(b => {
-    b.classList.toggle("active", b.textContent === n);
-  });
+  document.querySelectorAll(".nama-btn").forEach(b => b.classList.toggle("active", b.textContent === n));
 }
-
 function getNama() { return localStorage.getItem(LS_NAMA) || ""; }
 
 async function loadBarang() {
@@ -380,9 +400,7 @@ async function refreshBarang() {
     localStorage.setItem(LS_BARANG, JSON.stringify(allBarang));
     localStorage.setItem(LS_CACHE_TIME, Date.now().toString());
     showToast("✅ " + allBarang.length + " barang diperbarui", false, true);
-  } catch(e) {
-    showToast("❌ Gagal refresh", true);
-  }
+  } catch(e) { showToast("❌ Gagal refresh", true); }
   btn.textContent = "🔃"; btn.disabled = false;
 }
 
@@ -415,61 +433,173 @@ function beepType(type) {
   } catch(e) {}
 }
 
-// ========== CAMERA INLINE ==========
+// ========== CAMERA TOGGLE ==========
 async function toggleCamera() {
-  if (_camOpen) {
-    await stopCamera();
-  } else {
-    await startCamera();
-  }
+  if (_camOpen) { await stopCamera(); }
+  else { await startCamera(); }
 }
 
 async function startCamera() {
-  if (!window.Html5Qrcode) {
-    showToast("Memuat scanner...");
-    await new Promise((res, rej) => {
-      const s = document.createElement('script');
-      s.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
-      s.onload = res; s.onerror = rej;
-      document.head.appendChild(s);
-    });
-  }
   const zone = document.getElementById("camZone");
   zone.classList.add("open");
   document.getElementById("camToggle").classList.add("on");
   _camOpen = true;
+  _lastScanCode = null; _lastScanTime = 0;
+
+  // Coba BarcodeDetector native dulu
+  if (typeof BarcodeDetector !== 'undefined') {
+    try {
+      const supported = await BarcodeDetector.getSupportedFormats();
+      const needed = ['ean_13','ean_8','code_128','code_39','upc_a','upc_e','qr_code','itf','data_matrix'];
+      const formats = needed.filter(f => supported.includes(f));
+      if (formats.length > 0) {
+        _nativeDetector = new BarcodeDetector({ formats });
+        await startNativeScanner();
+        return;
+      }
+    } catch(e) {}
+  }
+
+  // Fallback: Html5Qrcode (versi lebih ringan)
+  await startHtml5Scanner();
+}
+
+// --- NATIVE BarcodeDetector ---
+async function startNativeScanner() {
+  document.getElementById("scanModeBadge").textContent = "⚡ NATIVE";
+  document.getElementById("nativeVideo").style.display = "block";
+  document.getElementById("qr-reader").style.display = "none";
+  _scanMode = 'native';
+
+  const constraints = {
+    video: {
+      facingMode: { ideal: 'environment' },
+      width: { ideal: 1280, max: 1920 },
+      height: { ideal: 720, max: 1080 }
+    }
+  };
 
   try {
-    _scanner = new Html5Qrcode('qr-reader');
-    await _scanner.start(
+    _nativeStream = await navigator.mediaDevices.getUserMedia(constraints);
+    const video = document.getElementById("nativeVideo");
+    video.srcObject = _nativeStream;
+    await video.play();
+    scheduleNativeScan();
+  } catch(e) {
+    await stopCamera();
+    manualBarcodeFallback();
+  }
+}
+
+// Scan frame tiap ~150ms (≈6.7fps) — cukup untuk barcode stasioner, hemat CPU
+function scheduleNativeScan() {
+  if (!_camOpen || _scanMode !== 'native') return;
+  _nativeRafId = setTimeout(doNativeScan, 150);
+}
+
+async function doNativeScan() {
+  if (!_camOpen || _scanMode !== 'native' || !_nativeDetector) return;
+  const video = document.getElementById("nativeVideo");
+  if (video.readyState < 2) { scheduleNativeScan(); return; }
+
+  try {
+    const barcodes = await _nativeDetector.detect(video);
+    if (barcodes && barcodes.length > 0) {
+      const code = barcodes[0].rawValue.trim();
+      const now = Date.now();
+      // Cooldown: abaikan kode yang sama dalam 2.5 detik
+      if (code && !(code === _lastScanCode && now - _lastScanTime < SCAN_COOLDOWN)) {
+        _lastScanCode = code;
+        _lastScanTime = now;
+        onScanSuccess(code);
+      }
+    }
+  } catch(e) {}
+
+  scheduleNativeScan();
+}
+
+// --- HTML5QRCODE FALLBACK ---
+async function startHtml5Scanner() {
+  document.getElementById("scanModeBadge").textContent = "📦 LIB";
+  document.getElementById("nativeVideo").style.display = "none";
+  document.getElementById("qr-reader").style.display = "block";
+  _scanMode = 'html5qr';
+
+  if (!window.Html5Qrcode) {
+    showToast("Memuat scanner...");
+    await loadScript('https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js');
+  }
+
+  try {
+    _html5Scanner = new Html5Qrcode('qr-reader');
+    await _html5Scanner.start(
       { facingMode: 'environment' },
       {
-        fps: 15,
-        qrbox: (w, h) => ({ width: Math.floor(w * 0.8), height: Math.floor(h * 0.6) }),
+        fps: 8,                 // turun dari 15 → 8: hemat CPU ~47%
+        qrbox: (w, h) => ({ width: Math.floor(w * 0.85), height: Math.floor(h * 0.65) }),
         aspectRatio: 1.5,
-        videoConstraints: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+        videoConstraints: {
+          facingMode: { ideal: 'environment' },
+          width:  { ideal: 1280, max: 1920 },
+          height: { ideal: 720,  max: 1080 }
+        },
+        experimentalFeatures: { useBarCodeDetectorIfSupported: false } // kita handle sendiri
       },
-      onScanSuccess,
+      (code) => {
+        code = code.trim();
+        const now = Date.now();
+        if (code && !(code === _lastScanCode && now - _lastScanTime < SCAN_COOLDOWN)) {
+          _lastScanCode = code;
+          _lastScanTime = now;
+          onScanSuccess(code);
+        }
+      },
       () => {}
     );
   } catch(e) {
     await stopCamera();
-    const code = prompt('📷 Kamera tidak tersedia. Masukkan barcode manual:');
-    if (code) { document.getElementById('searchInput').value = code.trim(); onSearch(code.trim()); }
+    manualBarcodeFallback();
   }
 }
 
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+
+function manualBarcodeFallback() {
+  const code = prompt('📷 Kamera tidak tersedia. Masukkan barcode manual:');
+  if (code) { document.getElementById('searchInput').value = code.trim(); onSearch(code.trim()); }
+}
+
 async function stopCamera() {
-  try { if (_scanner) await _scanner.stop(); } catch(e) {}
-  _scanner = null;
   _camOpen = false;
+
+  // Stop native
+  clearTimeout(_nativeRafId); _nativeRafId = null;
+  if (_nativeStream) { _nativeStream.getTracks().forEach(t => t.stop()); _nativeStream = null; }
+  const video = document.getElementById("nativeVideo");
+  video.srcObject = null; video.style.display = "none";
+
+  // Stop html5qr
+  try { if (_html5Scanner) await _html5Scanner.stop(); } catch(e) {}
+  _html5Scanner = null;
+  document.getElementById("qr-reader").innerHTML = "";
+  document.getElementById("qr-reader").style.display = "none";
+
+  _scanMode = null; _nativeDetector = null;
   document.getElementById("camZone").classList.remove("open");
   document.getElementById("camToggle").classList.remove("on");
+  document.getElementById("scanModeBadge").textContent = "";
   hideScanResult();
 }
 
+// ========== SCAN RESULT ==========
 function onScanSuccess(code) {
-  code = code.trim();
   const byDus = allBarang.find(b => (b["Barcode Dos"] || b["Barcode Dus"] || "").toString().trim() === code);
   const bySat = allBarang.find(b => (b["Barcode"] || "").toString().trim() === code);
 
@@ -500,18 +630,13 @@ function showScanResult(barang, defaultUnit) {
   const hasDus = isiDos > 0;
   const dosBtn = document.getElementById("scanUnitDos");
   const pcsBtn = document.getElementById("scanUnitPcs");
-  dosBtn.textContent = sB;
-  pcsBtn.textContent = sK;
+  dosBtn.textContent = sB; pcsBtn.textContent = sK;
   dosBtn.style.display = hasDus ? "" : "none";
   pcsBtn.classList.toggle("active", !hasDus || defaultUnit === sK);
   dosBtn.classList.toggle("active", hasDus && defaultUnit === sB);
   _scanUnit = defaultUnit;
 
-  const bar = document.getElementById("scanResultBar");
-  bar.classList.add("show");
-  // Adjust sticky top for result bar below cam zone
-  const camH = document.getElementById("camZone").offsetHeight;
-  bar.style.top = (44 + 38 + camH) + "px"; // topbar + subbar + cam
+  document.getElementById("scanResultBar").classList.add("show");
 }
 
 function hideScanResult() {
@@ -609,20 +734,24 @@ function pilihBarang(b) {
   document.activeElement && document.activeElement.blur();
 }
 
-// DUPLIKAT: kalau PLU+unit sama, tambah qty
 function addOrMergeItem(item) {
   const existing = itemList.findIndex(x =>
     x.plu && x.plu === item.plu && x.unit === item.unit && !x.isNew
   );
   if (existing >= 0) {
     itemList[existing].qty += item.qty;
-    renderItemList();
+    renderItemList(existing); // flash merged row
     localStorage.setItem(LS_ITEMS, JSON.stringify(itemList));
     showToast("+" + item.qty + " " + item.unit + " → " + item.nama, false, true);
   } else {
     itemList.push(item);
     renderItemList();
     localStorage.setItem(LS_ITEMS, JSON.stringify(itemList));
+    // Scroll ke bawah
+    setTimeout(() => {
+      const el = document.getElementById("itemList");
+      if (el) el.lastElementChild && el.lastElementChild.scrollIntoView({behavior:'smooth', block:'nearest'});
+    }, 80);
   }
 }
 
@@ -644,7 +773,9 @@ function setNewSatuan(s) {
 function okNewBarang() {
   const nama = document.getElementById("newBarangInput").value.trim();
   if (!nama) { showToast("Tulis nama barang!", true); return; }
-  itemList.push({plu:"NEW-"+Date.now(), nama, merk:"", qty:1, unit:_newSatuan, isiPerDos:0, satuanKecil:_newSatuan, satuanBesar:_newSatuan, isiKemasan:"", hasDus:false, isNew:true});
+  itemList.push({plu:"NEW-"+Date.now(), nama, merk:"", qty:1, unit:_newSatuan,
+    isiPerDos:0, satuanKecil:_newSatuan, satuanBesar:_newSatuan,
+    isiKemasan:"", hasDus:false, isNew:true});
   renderItemList();
   localStorage.setItem(LS_ITEMS, JSON.stringify(itemList));
   tutupNewBarang();
@@ -653,8 +784,7 @@ function okNewBarang() {
 }
 function tutupNewBarang() {
   document.getElementById("newBarangModal").classList.remove("show");
-  _newSatuan = "PCS";
-  setNewSatuan("PCS");
+  _newSatuan = "PCS"; setNewSatuan("PCS");
 }
 
 let _lastRemoved = null, _undoT = null;
@@ -704,7 +834,8 @@ function chgItemQty(idx, delta) {
   renderItemList(); localStorage.setItem(LS_ITEMS, JSON.stringify(itemList));
 }
 
-function renderItemList() {
+// flashRow: index baris yang baru di-merge, akan flash hijau
+function renderItemList(flashRow) {
   const el = document.getElementById("itemList");
   const card = document.getElementById("cardItems");
   const saveBar = document.getElementById("saveBar");
@@ -714,6 +845,7 @@ function renderItemList() {
     card.style.display = "none";
     saveBar.classList.remove("show");
     counter.classList.remove("show");
+    el.innerHTML = "";
     return;
   }
 
@@ -732,7 +864,7 @@ function renderItemList() {
     const unitClass = isDos ? "dos" : "pcs";
     const metaInfo = item.isiPerDos ? (item.isiPerDos + "/" + item.satuanBesar) : item.satuanKecil;
     const div = document.createElement("div");
-    div.className = "item-row";
+    div.className = "item-row" + (i === flashRow ? " flash" : "");
     div.innerHTML = `
       <span class="ir-num">${i+1}</span>
       <div class="ir-name">
@@ -760,9 +892,7 @@ function konfirmasiSimpan() {
   document.getElementById("konfirmasiSummary").textContent =
     "👷 " + nama + "  |  " + itemList.length + " jenis  |  " + totalPcs + " pcs total";
   let listTxt = "";
-  itemList.forEach((item, i) => {
-    listTxt += (i+1) + ". " + item.nama + " — " + item.qty + " " + item.unit + "\n";
-  });
+  itemList.forEach((item, i) => { listTxt += (i+1) + ". " + item.nama + " — " + item.qty + " " + item.unit + "\n"; });
   document.getElementById("konfirmasiList").textContent = listTxt.trim();
   document.getElementById("konfirmasiModal").classList.add("show");
 }
@@ -799,7 +929,7 @@ async function simpanSemua() {
   }
 }
 
-// ========== PREVIEW ==========
+// ========== PREVIEW WA ==========
 function showPreview(items, nama) {
   const tgl = document.getElementById("tglInput").value;
   const tglF = new Date(tgl+"T00:00:00").toLocaleDateString("id-ID", {day:"numeric",month:"long",year:"numeric"});
@@ -878,15 +1008,13 @@ function renderLog(data) {
   list.innerHTML = "";
   if (_filter === "jenis") {
     filtered.forEach(d => {
-      const el = document.createElement("div");
-      el.className = "log-item";
+      const el = document.createElement("div"); el.className = "log-item";
       el.innerHTML = `<div class="log-top"><div class="log-name">${esc(d.nama)}</div><div class="log-qty">${d.qty} pcs</div></div><div class="log-meta"><span>📅 ${esc(d.lastDate)}</span><span>👷 ${esc(d.lastKaryawan)}</span></div>`;
       list.appendChild(el);
     });
   } else {
     filtered.forEach(d => {
-      const el = document.createElement("div");
-      el.className = "log-item";
+      const el = document.createElement("div"); el.className = "log-item";
       el.innerHTML = `<div class="log-top"><div class="log-name">${esc(d["Nama Barang"]||"-")}</div><div class="log-qty">+${esc(String(d["Jumlah Input"]??d["Jumlah"]??0))} ${esc(d["Satuan Input"]??d["Satuan"]??"")}</div></div><div class="log-meta"><span>🕐 ${esc(d["Tanggal"]||"")} ${esc(d["Jam"]||"")}</span><span>👷 ${esc(d["Karyawan"]??d["Nama Karyawan"]??"")}</span>${d["Status Barang"]==="Barang Baru"?'<span class="log-badge">BARU</span>':""}${d["Catatan"]?`<span>💬 ${esc(d["Catatan"])}</span>`:""}</div>`;
       list.appendChild(el);
     });
@@ -904,13 +1032,12 @@ function exportCSV() {
 
 // ========== UTILS ==========
 function showPage(p) {
-  document.querySelectorAll(".page").forEach(el=>el.classList.remove("on"));
-  document.querySelectorAll(".tab").forEach(el=>el.classList.remove("on"));
+  document.querySelectorAll(".page").forEach(el => el.classList.remove("on"));
+  document.querySelectorAll(".tab").forEach(el => el.classList.remove("on"));
   document.getElementById(p==="catat"?"pageCatat":"pageAdmin").classList.add("on");
   document.querySelectorAll(".tab")[p==="catat"?0:1].classList.add("on");
   if (p === "admin") { stopCamera(); loadCatatan(); document.getElementById("subbar").style.display = "none"; }
   else document.getElementById("subbar").style.display = "flex";
-  // Tutup keyboard
   document.activeElement && document.activeElement.blur();
 }
 
@@ -919,7 +1046,7 @@ function showToast(msg, isErr, isOk) {
   const t = document.getElementById("toast");
   t.textContent = msg;
   t.className = "toast show" + (isErr?" err":(isOk?" ok":""));
-  clearTimeout(_toastT); _toastT = setTimeout(()=>t.classList.remove("show"), 2500);
+  clearTimeout(_toastT); _toastT = setTimeout(() => t.classList.remove("show"), 2500);
 }
 function esc(s) { return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 </script>
