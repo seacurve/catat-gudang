@@ -42,7 +42,7 @@ input,button,textarea,select{font-size:16px!important;font-family:var(--font)}
 .cam-toggle.on{background:var(--accent);border-color:var(--accent)}
 
 /* CAMERA ZONE inline */
-.cam-zone{background:#000;overflow:hidden;transition:max-height .3s ease;max-height:0;position:sticky;top:82px;z-index:180;margin-top:0}
+.cam-zone{background:#000;overflow:hidden;transition:max-height .3s ease;max-height:0;position:sticky;top:82px;z-index:180}
 .cam-zone.open{max-height:220px}
 
 /* Native scanner canvas */
@@ -330,8 +330,7 @@ let _scanMode = null; // 'native' | 'html5qr'
 
 // Native BarcodeDetector
 let _nativeStream = null, _nativeRafId = null, _nativeDetector = null;
-let _lastScanCode = null, _lastScanTime = 0, _pendingCode = null;
-let _zxingReader = null;
+let _lastScanCode = null, _lastScanTime = 0;
 
 // Html5Qrcode fallback
 let _html5Scanner = null;
@@ -445,66 +444,119 @@ async function startCamera() {
   zone.classList.add("open");
   document.getElementById("camToggle").classList.add("on");
   _camOpen = true;
-  _lastScanCode = null; _lastScanTime = 0; _pendingCode = null;
-  await startZxingScanner();
+  _lastScanCode = null; _lastScanTime = 0;
+
+  // Coba BarcodeDetector native dulu
+  if (typeof BarcodeDetector !== 'undefined') {
+    try {
+      const supported = await BarcodeDetector.getSupportedFormats();
+      const needed = ['ean_13','ean_8','code_128','code_39','upc_a','upc_e','qr_code','itf','data_matrix'];
+      const formats = needed.filter(f => supported.includes(f));
+      if (formats.length > 0) {
+        _nativeDetector = new BarcodeDetector({ formats });
+        await startNativeScanner();
+        return;
+      }
+    } catch(e) {}
+  }
+
+  // Fallback: Html5Qrcode (versi lebih ringan)
+  await startHtml5Scanner();
 }
 
-async function startZxingScanner() {
-  document.getElementById("scanModeBadge").textContent = "⚡ ZXing";
+// --- NATIVE BarcodeDetector ---
+async function startNativeScanner() {
+  document.getElementById("scanModeBadge").textContent = "⚡ NATIVE";
   document.getElementById("nativeVideo").style.display = "block";
   document.getElementById("qr-reader").style.display = "none";
   _scanMode = 'native';
 
-  // Load ZXing kalau belum ada
-  if (!window.ZXing) {
-    showToast("Memuat scanner...");
-    await loadScript('https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js');
-  }
-
-  const hints = new Map();
-  const formats = [
-    ZXing.BarcodeFormat.EAN_13,
-    ZXing.BarcodeFormat.EAN_8,
-    ZXing.BarcodeFormat.CODE_128,
-    ZXing.BarcodeFormat.CODE_39,
-    ZXing.BarcodeFormat.UPC_A,
-    ZXing.BarcodeFormat.UPC_E,
-    ZXing.BarcodeFormat.ITF,
-  ];
-  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
-  hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-
-  const reader = new ZXing.BrowserMultiFormatReader(hints, {
-    delayBetweenScanAttempts: 100,   // ms antar scan
-    delayBetweenScanSuccess: 2500,   // cooldown setelah sukses
-  });
-  _zxingReader = reader;
+  const constraints = {
+    video: {
+      facingMode: { ideal: 'environment' },
+      width: { ideal: 1280, max: 1920 },
+      height: { ideal: 720, max: 1080 }
+    }
+  };
 
   try {
-    const devices = await ZXing.BrowserCodeReader.listVideoInputDevices();
-    // Pilih kamera belakang
-    const backCam = devices.find(d =>
-      /back|rear|environment/i.test(d.label)
-    ) || devices[devices.length - 1] || devices[0];
+    _nativeStream = await navigator.mediaDevices.getUserMedia(constraints);
+    const video = document.getElementById("nativeVideo");
+    video.srcObject = _nativeStream;
+    await video.play();
+    scheduleNativeScan();
+  } catch(e) {
+    await stopCamera();
+    manualBarcodeFallback();
+  }
+}
 
-    const deviceId = backCam ? backCam.deviceId : undefined;
+// Scan frame tiap ~150ms (≈6.7fps) — cukup untuk barcode stasioner, hemat CPU
+function scheduleNativeScan() {
+  if (!_camOpen || _scanMode !== 'native') return;
+  _nativeRafId = setTimeout(doNativeScan, 150);
+}
 
-    await reader.decodeFromVideoDevice(deviceId, 'nativeVideo', (result, err) => {
-      if (!result) return;
-      const code = result.getText().trim();
-      if (!code) return;
+async function doNativeScan() {
+  if (!_camOpen || _scanMode !== 'native' || !_nativeDetector) return;
+  const video = document.getElementById("nativeVideo");
+  if (video.readyState < 2) { scheduleNativeScan(); return; }
+
+  try {
+    const barcodes = await _nativeDetector.detect(video);
+    if (barcodes && barcodes.length > 0) {
+      const code = barcodes[0].rawValue.trim();
       const now = Date.now();
-      if (code === _lastScanCode && now - _lastScanTime < SCAN_COOLDOWN) return;
-      // Double-confirm
-      if (code === _pendingCode) {
-        _pendingCode = null;
+      // Cooldown: abaikan kode yang sama dalam 2.5 detik
+      if (code && !(code === _lastScanCode && now - _lastScanTime < SCAN_COOLDOWN)) {
         _lastScanCode = code;
         _lastScanTime = now;
         onScanSuccess(code);
-      } else {
-        _pendingCode = code;
       }
-    });
+    }
+  } catch(e) {}
+
+  scheduleNativeScan();
+}
+
+// --- HTML5QRCODE FALLBACK ---
+async function startHtml5Scanner() {
+  document.getElementById("scanModeBadge").textContent = "📦 LIB";
+  document.getElementById("nativeVideo").style.display = "none";
+  document.getElementById("qr-reader").style.display = "block";
+  _scanMode = 'html5qr';
+
+  if (!window.Html5Qrcode) {
+    showToast("Memuat scanner...");
+    await loadScript('https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js');
+  }
+
+  try {
+    _html5Scanner = new Html5Qrcode('qr-reader');
+    await _html5Scanner.start(
+      { facingMode: 'environment' },
+      {
+        fps: 8,                 // turun dari 15 → 8: hemat CPU ~47%
+        qrbox: (w, h) => ({ width: Math.floor(w * 0.85), height: Math.floor(h * 0.65) }),
+        aspectRatio: 1.5,
+        videoConstraints: {
+          facingMode: { ideal: 'environment' },
+          width:  { ideal: 1280, max: 1920 },
+          height: { ideal: 720,  max: 1080 }
+        },
+        experimentalFeatures: { useBarCodeDetectorIfSupported: false } // kita handle sendiri
+      },
+      (code) => {
+        code = code.trim();
+        const now = Date.now();
+        if (code && !(code === _lastScanCode && now - _lastScanTime < SCAN_COOLDOWN)) {
+          _lastScanCode = code;
+          _lastScanTime = now;
+          onScanSuccess(code);
+        }
+      },
+      () => {}
+    );
   } catch(e) {
     await stopCamera();
     manualBarcodeFallback();
@@ -527,22 +579,19 @@ function manualBarcodeFallback() {
 async function stopCamera() {
   _camOpen = false;
 
-  // Stop ZXing
-  try { if (_zxingReader) { _zxingReader.reset(); _zxingReader = null; } } catch(e) {}
-
-  // Stop native stream kalau masih ada
+  // Stop native
   clearTimeout(_nativeRafId); _nativeRafId = null;
   if (_nativeStream) { _nativeStream.getTracks().forEach(t => t.stop()); _nativeStream = null; }
   const video = document.getElementById("nativeVideo");
   video.srcObject = null; video.style.display = "none";
 
-  // Stop html5qr kalau masih ada
+  // Stop html5qr
   try { if (_html5Scanner) await _html5Scanner.stop(); } catch(e) {}
   _html5Scanner = null;
   document.getElementById("qr-reader").innerHTML = "";
   document.getElementById("qr-reader").style.display = "none";
 
-  _scanMode = null; _nativeDetector = null; _zxingReader = null;
+  _scanMode = null; _nativeDetector = null;
   document.getElementById("camZone").classList.remove("open");
   document.getElementById("camToggle").classList.remove("on");
   document.getElementById("scanModeBadge").textContent = "";
