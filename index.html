@@ -40,6 +40,7 @@ input,button,textarea,select{font-size:16px!important;font-family:var(--font)}
 .tgl-input{height:32px;padding:0 8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--text);background:var(--surface);outline:none;-webkit-appearance:none;width:130px;flex-shrink:0}
 .cam-toggle{width:36px;height:32px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);font-size:18px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .cam-toggle.on{background:var(--accent);border-color:var(--accent)}
+.cam-toggle.slow-on{background:var(--yellow-light);border-color:var(--yellow)}
 
 /* CAMERA ZONE — inline sticky */
 .cam-zone{background:#000;overflow:hidden;transition:max-height .3s ease;max-height:0;position:sticky;top:82px;z-index:180}
@@ -170,10 +171,11 @@ input,button,textarea,select{font-size:16px!important;font-family:var(--font)}
   </div>
 </div>
 
-<!-- SUBBAR: nama + tanggal + kamera -->
+<!-- SUBBAR: nama + tanggal + slow mode + refresh + kamera -->
 <div class="subbar" id="subbar" style="display:none">
   <div class="subbar-nama" id="namaBtns"></div>
   <input id="tglInput" type="date" class="tgl-input" />
+  <button class="cam-toggle" id="slowToggle" onclick="toggleSlowMode()" title="Mode lambat — untuk HP lemah / iPhone">🐢</button>
   <button class="cam-toggle" id="refreshBarangBtn" onclick="refreshBarang()" title="Refresh daftar barang">🔃</button>
   <button class="cam-toggle" id="camToggle" onclick="toggleCamera()" title="Kamera">📷</button>
 </div>
@@ -302,6 +304,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzFKC5ugFnHy77DdLf_E7_Q
 const CACHE_TTL = 10 * 60 * 1000;
 const LS_ITEMS = "cgudang_items", LS_NAMA = "cgudang_nama", LS_TGL = "cgudang_tgl";
 const LS_BARANG = "cgudang_barang", LS_CACHE_TIME = "cgudang_cache_t";
+const LS_SLOW = "cgudang_slowmode";
 const NAMA_PRESETS = ["Rudi","Ria","Haji"];
 
 let allBarang = [], itemList = [], catatanData = [];
@@ -336,6 +339,9 @@ async function init() {
   const tglInp = document.getElementById("tglInput");
   tglInp.value = savedTgl || new Date().toISOString().slice(0,10);
   tglInp.addEventListener("change", () => localStorage.setItem(LS_TGL, tglInp.value));
+
+  // Slow mode indicator
+  updateSlowToggle();
 
   // Load saved items
   try {
@@ -386,6 +392,28 @@ async function refreshBarang() {
   btn.textContent = "🔃"; btn.disabled = false;
 }
 
+// ========== SLOW MODE ==========
+function isSlowMode() { return localStorage.getItem(LS_SLOW) === "1"; }
+function toggleSlowMode() {
+  const cur = isSlowMode();
+  localStorage.setItem(LS_SLOW, cur ? "0" : "1");
+  updateSlowToggle();
+  showToast(cur ? "⚡ Mode Normal" : "🐢 Mode Lambat (HP lemah)", false, true);
+  // Restart camera if open
+  if (_camOpen) {
+    const wasOpen = true;
+    stopCamera().then(() => { if (wasOpen) startCamera(); });
+  }
+}
+function updateSlowToggle() {
+  const btn = document.getElementById("slowToggle");
+  if (btn) {
+    btn.classList.toggle("slow-on", isSlowMode());
+    btn.textContent = isSlowMode() ? "🐢" : "🐢";
+    btn.style.opacity = isSlowMode() ? "1" : "0.45";
+  }
+}
+
 // ========== BEEP + VIBRATE ==========
 function beepType(type) {
   try { navigator.vibrate && navigator.vibrate(type === 'error' ? [80,40,80] : 50); } catch(e) {}
@@ -415,7 +443,7 @@ function beepType(type) {
   } catch(e) {}
 }
 
-// ========== CAMERA INLINE ==========
+// ========== CAMERA INLINE (OPTIMIZED v2 — no native BarcodeDetector) ==========
 async function toggleCamera() {
   if (_camOpen) {
     await stopCamera();
@@ -439,19 +467,44 @@ async function startCamera() {
   document.getElementById("camToggle").classList.add("on");
   _camOpen = true;
 
+  // Deteksi device + mode
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const slow = isSlowMode();
+
+  // === PARAMETER DI-TUNE UNTUK HP LEMAH ===
+  // Strategy: resolusi TURUN, fps TURUN, scan area KECIL
+  // Ini mengurangi pixel yang harus di-decode Html5Qrcode per frame
+  let fps, resW, resH, boxW, boxH;
+  if (slow) {
+    // Mode 🐢 — ultra hemat CPU: 480px, 4fps, area scan kecil
+    fps = 4;  resW = 480; resH = 360; boxW = 0.50; boxH = 0.32;
+  } else if (isIOS) {
+    // iPhone Safari — WebRTC lebih berat, resolusi rendah
+    fps = 6;  resW = 640; resH = 480; boxW = 0.58; boxH = 0.38;
+  } else {
+    // Android (termasuk low-mid end) — seimbang
+    fps = 10; resW = 800; resH = 600; boxW = 0.65; boxH = 0.42;
+  }
+
   try {
     _scanner = new Html5Qrcode('qr-reader');
     await _scanner.start(
       { facingMode: 'environment' },
       {
-        fps: 15,
-        qrbox: (w, h) => ({ width: Math.floor(w * 0.8), height: Math.floor(h * 0.6) }),
+        fps,
+        qrbox: (w, h) => ({ width: Math.floor(w * boxW), height: Math.floor(h * boxH) }),
         aspectRatio: 1.5,
-        videoConstraints: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+        disableFlip: true,
+        videoConstraints: {
+          facingMode: 'environment',
+          width: { ideal: resW },
+          height: { ideal: resH }
+        }
       },
       onScanSuccess,
       () => {}
     );
+    showToast((slow ? "🐢 Mode Lambat" : "📷") + " — " + resW + "px @" + fps + "fps", false, true);
   } catch(e) {
     await stopCamera();
     const code = prompt('📷 Kamera tidak tersedia. Masukkan barcode manual:');
@@ -509,9 +562,8 @@ function showScanResult(barang, defaultUnit) {
 
   const bar = document.getElementById("scanResultBar");
   bar.classList.add("show");
-  // Adjust sticky top for result bar below cam zone
   const camH = document.getElementById("camZone").offsetHeight;
-  bar.style.top = (44 + 38 + camH) + "px"; // topbar + subbar + cam
+  bar.style.top = (44 + 38 + camH) + "px";
 }
 
 function hideScanResult() {
@@ -910,7 +962,6 @@ function showPage(p) {
   document.querySelectorAll(".tab")[p==="catat"?0:1].classList.add("on");
   if (p === "admin") { stopCamera(); loadCatatan(); document.getElementById("subbar").style.display = "none"; }
   else document.getElementById("subbar").style.display = "flex";
-  // Tutup keyboard
   document.activeElement && document.activeElement.blur();
 }
 
