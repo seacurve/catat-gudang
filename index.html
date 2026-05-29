@@ -42,7 +42,7 @@ input,button,textarea,select{font-size:16px!important;font-family:var(--font)}
 .cam-toggle.on{background:var(--accent);border-color:var(--accent)}
 
 /* CAMERA ZONE inline */
-.cam-zone{background:#000;overflow:hidden;transition:max-height .3s ease;max-height:0;position:sticky;top:82px;z-index:180}
+.cam-zone{background:#000;overflow:hidden;transition:max-height .3s ease;max-height:0;position:sticky;top:82px;z-index:180;margin-top:0}
 .cam-zone.open{max-height:220px}
 
 /* Native scanner canvas */
@@ -330,7 +330,7 @@ let _scanMode = null; // 'native' | 'html5qr'
 
 // Native BarcodeDetector
 let _nativeStream = null, _nativeRafId = null, _nativeDetector = null;
-let _lastScanCode = null, _lastScanTime = 0;
+let _lastScanCode = null, _lastScanTime = 0, _pendingCode = null;
 
 // Html5Qrcode fallback
 let _html5Scanner = null;
@@ -497,24 +497,39 @@ function scheduleNativeScan() {
   _nativeRafId = setTimeout(doNativeScan, 150);
 }
 
+
+
 async function doNativeScan() {
   if (!_camOpen || _scanMode !== 'native' || !_nativeDetector) return;
   const video = document.getElementById("nativeVideo");
-  if (video.readyState < 2) { scheduleNativeScan(); return; }
+  // Tunggu sampai video benar-benar punya frame (readyState 4 = HAVE_ENOUGH_DATA)
+  if (video.readyState < 4 || video.videoWidth === 0) { scheduleNativeScan(); return; }
 
   try {
     const barcodes = await _nativeDetector.detect(video);
     if (barcodes && barcodes.length > 0) {
       const code = barcodes[0].rawValue.trim();
+      if (!code) { _pendingCode = null; scheduleNativeScan(); return; }
+
       const now = Date.now();
-      // Cooldown: abaikan kode yang sama dalam 2.5 detik
-      if (code && !(code === _lastScanCode && now - _lastScanTime < SCAN_COOLDOWN)) {
+      // Cooldown: skip kalau kode sama baru saja diproses
+      if (code === _lastScanCode && now - _lastScanTime < SCAN_COOLDOWN) {
+        _pendingCode = null; scheduleNativeScan(); return;
+      }
+
+      // Double-confirm: harus sama 2x berturutan
+      if (code === _pendingCode) {
+        _pendingCode = null;
         _lastScanCode = code;
         _lastScanTime = now;
         onScanSuccess(code);
+      } else {
+        _pendingCode = code; // simpan, tunggu konfirmasi berikutnya
       }
+    } else {
+      _pendingCode = null; // reset kalau tidak ada barcode di frame
     }
-  } catch(e) {}
+  } catch(e) { _pendingCode = null; }
 
   scheduleNativeScan();
 }
@@ -548,11 +563,17 @@ async function startHtml5Scanner() {
       },
       (code) => {
         code = code.trim();
+        if (!code) return;
         const now = Date.now();
-        if (code && !(code === _lastScanCode && now - _lastScanTime < SCAN_COOLDOWN)) {
+        if (code === _lastScanCode && now - _lastScanTime < SCAN_COOLDOWN) return;
+        // Double-confirm
+        if (code === _pendingCode) {
+          _pendingCode = null;
           _lastScanCode = code;
           _lastScanTime = now;
           onScanSuccess(code);
+        } else {
+          _pendingCode = code;
         }
       },
       () => {}
